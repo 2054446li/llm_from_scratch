@@ -12,12 +12,11 @@
 4. [DeepSeek-R1：纯 RL 激发推理能力](#deepseek-r1纯-rl-激发推理能力)
 5. [DeepSeek-Coder 系列](#deepseek-coder-系列)
 6. [DeepSeek-Math 与 Prover 系列](#deepseek-math-与-prover-系列)
-7. [DeepSeek-VL 与 Janus（多模态）](#deepseek-vl-与-janus多模态)
-8. [基础设施与工程创新](#基础设施与工程创新)
-9. [核心技术创新总结](#核心技术创新总结)
-10. [与其他模型的对标](#与其他模型的对标)
-11. [技术启示与面试准备](#技术启示与面试准备)
-12. [参考信息](#参考信息)
+7. [基础设施与工程创新](#基础设施与工程创新)
+8. [核心技术创新总结](#核心技术创新总结)
+9. [与其他模型的对标](#与其他模型的对标)
+10. [技术启示与面试准备](#技术启示与面试准备)
+11. [参考信息](#参考信息)
 
 ---
 
@@ -31,15 +30,11 @@
 | DeepSeekMoE | 16B / 145B | 2B / ~28B | 2024-01 | MoE 路线验证 |
 | DeepSeek-Coder | 1.3B-33B | 全量 | 2024-01 | 代码专项 |
 | DeepSeek-Math | 7B | 全量 | 2024-02 | 数学推理 |
-| DeepSeek-VL | 7B | 全量 | 2024-03 | 首个多模态 |
 | DeepSeek-V2 | 236B | 21B | 2024-05 | **MLA + MoE 里程碑** |
 | DeepSeek-Prover | 7B | 全量 | 2024-05 | 形式化定理证明 |
 | DeepSeek-Coder-V2 | 236B | 21B | 2024-06 | MoE 代码模型 |
 | DeepSeek-V2.5 | 236B | 21B | 2024-09 | 合并 Chat + Coder |
-| Janus | 1.3B-7B | 全量 | 2024-10 | 多模态理解+生成统一 |
-| DeepSeek-VL2 | MoE | - | 2024-12 | MoE 多模态 |
 | DeepSeek-V3 | 671B | 37B | 2024-12 | **极致效率 MoE** |
-| Janus-Pro | 7B | 全量 | 2025-01 | Janus 升级 |
 | DeepSeek-R1 | 671B | 37B | 2025-01 | **纯 RL 推理（Nature）** |
 | NSA（原生稀疏注意力） | - | - | 2025-02 | **可训练稀疏注意力**（论文） |
 | DeepSeek-Prover-V2 | 671B | 37B | 2025-04 | 子目标分解 RL，定理证明 SOTA |
@@ -49,7 +44,7 @@
 | DeepSeek-OCR | 3B (MoE-A570M) | 0.57B | 2025-10 | **上下文光学压缩** |
 | DeepSeekMath-V2 | 671B | 37B | 2025-11 | 数学竞赛金牌级（基于 V3.2-Exp） |
 | DeepSeek-V3.2 | 671B | 37B | 2025-12 | **DSA + 可扩展 RL，比肩 GPT-5** |
-| DeepSeek-V4（Preview） | 1.6T / 284B | 49B / 13B | 2026-04 | **1M 上下文** MoE 系列 |
+| DeepSeek-V4 | 1.6T / 284B | 49B / 13B | 2026-04 | **1M 上下文** MoE 系列（混合注意力 CSA+HCA） |
 
 ### 技术路线演进
 
@@ -61,8 +56,6 @@
    │
 2024.02  Math（数学推理）
    │
-2024.03  VL（多模态首次尝试）
-   │
 2024.05  V2 ⭐ 里程碑：MLA + MoE → 236B/21B
    │         训练成本 -42.5%，KV 缓存 -93.3%
    │
@@ -70,12 +63,9 @@
    ├── 2024.06：Coder-V2（代码能力升级）
    ├── 2024.08：Prover-V1.5（RL+MCTS）
    ├── 2024.09：V2.5（合并 Chat + Coder）
-   ├── 2024.10：Janus（多模态理解+生成统一）
    │
 2024.12  V3 ⭐ 里程碑：671B/37B，$5.576M 训练成本
    │         辅助损失无关 + MTP + FP8
-   │
-   ├── 同期：VL2（MoE 多模态）
    │
 2025.01  R1 ⭐ 范式突破：纯 RL → 推理涌现
               GRPO，比肩 o1，发表于 Nature
@@ -97,13 +87,14 @@
 2025.12  V3.2 ⭐ DSA + 可扩展 RL → 比肩 GPT-5
    │         Speciale 变体超越 GPT-5，IMO/IOI/ICPC/CMO 金牌
    │
-2026.04  V4（Preview）⭐ 1M 上下文 MoE
+2026.04  V4 ⭐ 里程碑：1M 上下文 MoE，混合注意力（CSA+HCA）
               V4-Pro 1.6T/49B，V4-Flash 284B/13B
+              1M 上下文下 FLOPs 仅 V3.2 的 27%、KV 缓存仅 10%
 ```
 
 ### 核心技术路线总结
 
-稠密模型 → MoE（稀疏计算）→ MLA+MoE（高效推理）→ 纯 RL 推理（能力涌现）→ 稀疏注意力（NSA/DSA，长上下文效率）→ 1M 超长上下文（V4）
+稠密模型 → MoE（稀疏计算）→ MLA+MoE（高效推理）→ 纯 RL 推理（能力涌现）→ 稀疏注意力（NSA/DSA，长上下文效率）→ 1M 超长上下文 + 混合注意力（V4，CSA+HCA）
 
 
 ---
@@ -482,16 +473,43 @@ R1 之后最重要的旗舰论文（263+ 作者），主题：**在效率与推�
 
 **后训练视角重点**：V3.2 把"可扩展 RL + 智能体任务合成"作为核心卖点——标志 DeepSeek 后训练从"激发推理"（R1）走向"**RL 扩 scale + agentic 能力**"。这是当前后训练工程的最前沿方向。
 
-### DeepSeek-V4 Preview（2026-04）
+### DeepSeek-V4（2026-04，arxiv:2606.19348）⭐
 
-2026 年新一代开源 MoE 系列，核心赌注：**百万 token（1M）上下文**。
+标题《DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence》。2026 年新一代开源 MoE 旗舰，核心赌注：**百万 token（1M）上下文的"效率"问题**（DeepSeek 的论点：1M 上下文已不是能力问题，而是效率问题）。MIT 许可，开源权重 + 技术报告 + 参考推理实现。
 
-| 型号 | 总参数 | 激活参数 | 上下文 |
-|------|--------|----------|--------|
-| V4-Pro | 1.6T | 49B | 1M |
-| V4-Flash | 284B | 13B | 1M |
+| 型号 | 总参数 | 激活参数 | 上下文 | 最大输出 |
+|------|--------|----------|--------|----------|
+| V4-Pro | 1.6T | 49B | 1M | 384K |
+| V4-Flash | 284B | 13B | 1M | 384K |
 
-延续 V3.1 的混合思考设计，把推理融入统一基座。（截至 2026-06 为 Preview，完整技术报告待发布）
+**架构三大升级**：
+
+1. **混合注意力（Hybrid Attention）**：组合两种机制提升长上下文效率
+   - **CSA（Compressed Sparse Attention，压缩稀疏注意力）**
+   - **HCA（Heavily Compressed Attention，重压缩注意力）**
+   - 效率（1M 上下文，Pro vs V3.2）：单 token 推理 FLOPs 仅 **27%**，KV 缓存仅 **10%** → 这是 NSA(2025-02)→DSA(V3.2)→CSA/HCA(V4) 稀疏注意力路线的延续
+2. **流形约束超连接（mHC, Manifold-Constrained Hyper-Connections）**：强化残差连接，提升跨层信号传播稳定性，同时保留模型表达力
+3. **Muon 优化器**：更快收敛、更稳训练
+
+**训练**：
+- **预训练**：32T+ 高质量多样 token；**FP4 + FP8 混合精度**（MoE 专家用 FP4，其余多数参数用 FP8；base 模型仅 FP8）
+- **后训练（两阶段范式）★** ——与后训练方向高度相关：
+  1. **领域专家独立培养**：通过 **SFT + RL（GRPO）** 分别训练各领域的专精专家
+  2. **统一模型整合**：通过 **on-policy 蒸馏（on-policy distillation）**，把不同领域的能力整合进单一模型
+
+> **后训练视角重点**：V4 后训练范式 = "**分而治之 + on-policy 蒸馏统一**"。先用 SFT+GRPO 把每个领域（数学/代码/agent 等）各自练到强，再用 on-policy 蒸馏（学生自己采样、教师在学生分布上打分/纠正）把多个专家合并为一个模型。这解决了多领域 RL 互相干扰、能力此消彼长的问题，是 [[9_grpo|GRPO]] 之后多领域能力融合的前沿做法，呼应 V3.2 的"可扩展 RL"思路并更进一步。on-policy 蒸馏比离线蒸馏更能保持学生策略一致性（训练-推理一致性），值得重点研究。
+
+**三档推理模式（混合思考，延续 V3.1 DeepThink 思路）**：
+
+| 模式 | 特点 | 输出格式 |
+|------|------|----------|
+| Non-think | 快速直觉响应 | `</think>` + 摘要 |
+| Think High | 有意识的逻辑分析，慢但更准 | `<think>` 思考 `</think>` + 摘要 |
+| Think Max | 推理能力推到极致 | 特殊 system prompt + `<think>` 思考 `</think>` + 摘要 |
+
+- **`-Max` 变体**（最大推理预算）：**V4-Pro-Max** 定位最强开源模型、代码 benchmark 顶尖；**V4-Flash-Max** 推理可比肩 Pro（更大思考预算），但纯知识/复杂 agentic 任务略逊。
+- 采样建议：temperature=1.0, top_p=1.0；Think Max 模式需 ≥384K 上下文窗口。
+- 不提供 Jinja chat template，改用专用 `encoding_dsv4`（assistant 消息含 `reasoning_content` 字段，分离思考与最终答案）。
 
 
 ---
@@ -548,48 +566,6 @@ R1 之后最重要的旗舰论文（263+ 作者），主题：**在效率与推�
 
 ---
 
-## DeepSeek-VL 与 Janus（多模态）
-
-### DeepSeek-VL（2024-03，arxiv:2403.05525）
-
-- **架构**：Vision Encoder + LLM
-- **特点**：面向真实世界的视觉-语言理解
-- **能力**：OCR、图表理解、视觉问答
-
-### DeepSeek-VL2（2024-12，arxiv:2412.10302）
-
-- **架构**：MoE Vision-Language Model
-- **升级**：引入 MoE 架构到多模态
-- **性能**：多模态理解能力大幅提升
-
-### Janus（2024-10，arxiv:2410.13848）
-
-**核心创新：解耦视觉编码**
-
-```
-传统多模态（如 LLaVA）:
-  理解和生成共用同一个 Vision Encoder
-  问题：理解需要高级语义，生成需要低级细节 → 互相冲突
-
-Janus:
-  理解 → SigLIP Encoder（语义特征）
-  生成 → VQ Tokenizer（细节特征）
-  两者独立编码，统一到 LLM 解码
-```
-
-**优势**：
-- 避免理解和生成的特征冲突
-- 理解任务不受生成影响，反之亦然
-- 简单有效的设计
-
-### Janus-Pro（2025-01，arxiv:2501.02707）
-
-- 改进版本，提升生成质量
-- 扩大训练数据和模型规模
-
-
----
-
 ## 基础设施与工程创新
 
 DeepSeek 开源了其训练/推理基础设施，工程质量极高：
@@ -636,11 +612,13 @@ DeepSeek 开源了其训练/推理基础设施，工程质量极高：
 | FP8 训练 | V3 (2024-12) | 训练成本过高 | 低精度计算 → 成本大幅降低 |
 | GRPO | R1 (2025-01) | PPO 需要 Value Model | 组内相对排名 → 无需 Critic |
 | 纯 RL 推理 | R1 (2025-01) | 推理依赖标注数据 | RL 激发涌现 → 无需人类推理轨迹 |
-| 解耦视觉编码 | Janus (2024-10) | 理解/生成特征冲突 | 独立编码 → 各自最优 |
 | 原生稀疏注意力 (NSA) | NSA (2025-02) | 长上下文 O(L²) + 稀疏注意力难训练 | 分层稀疏 + 硬件对齐 → 端到端可训 |
 | 子目标分解 RL | Prover-V2 (2025-04) | 复杂证明难一步到位 | 递归分解 + 编译器奖励 (RLVR) |
 | DeepSeek 稀疏注意力 (DSA) | V3.2 (2025-12) | 长上下文推理成本 | 闪电索引器 + token 选择 → O(Lk) |
 | 可扩展 RL + 智能体合成 | V3.2 (2025-12) | RL 难 scale、智能体能力弱 | 扩后训练算力 + agentic 任务合成 |
+| 混合注意力 (CSA + HCA) | V4 (2026-04) | 1M 上下文效率瓶颈 | 压缩稀疏 + 重压缩 → FLOPs 27%、KV 10% |
+| 流形约束超连接 (mHC) | V4 (2026-04) | 深层信号传播稳定性 | 强化残差连接，保表达力 |
+| 两阶段后训练（专家培养+蒸馏统一） | V4 (2026-04) | 多领域 RL 互相干扰 | SFT+GRPO 分域专精 → on-policy 蒸馏合一 |
 | 上下文光学压缩 | OCR (2025-10) | 长文本 token 开销 | 文本渲染成图 → 视觉 token 压缩 |
 
 
@@ -729,13 +707,10 @@ DeepSeek 开源了其训练/推理基础设施，工程质量极高：
 7. **FP8 训练如何保证精度？哪些地方不能用 FP8？**
    - 思路：线性层可用 FP8，Softmax/归一化保持高精度，loss scaling 补偿
 
-8. **Janus 为什么要解耦视觉编码？与 LLaVA 的区别？**
-   - 思路：理解要语义、生成要细节，统一编码互相拖累
-
-9. **如何用 $5.6M 训练出 671B 模型？关键节省在哪？**
+8. **如何用 $5.6M 训练出 671B 模型？关键节省在哪？**
    - 思路：MoE(仅 37B 激活) + FP8 + 高效并行(DualPipe) + 稳定训练(零回滚)
 
-10. **DeepSeek 的技术路线对行业有什么启示？**
+9. **DeepSeek 的技术路线对行业有什么启示？**
     - 思路：开源可以比肩闭源、效率创新比堆算力更重要、RL 是推理的未来
 
 
@@ -751,22 +726,19 @@ DeepSeek 开源了其训练/推理基础设施，工程质量极高：
 | 2 | DeepSeekMoE: Towards Ultimate Expert Specialization in MoE LMs | https://arxiv.org/abs/2401.06066 | 2024-01 |
 | 3 | DeepSeek-Coder: When the Large Language Model Meets Programming | https://arxiv.org/abs/2401.14196 | 2024-01 |
 | 4 | DeepSeek-Math: Pushing the Limits of Mathematical Reasoning | https://arxiv.org/abs/2402.03300 | 2024-02 |
-| 5 | DeepSeek-VL: Towards Real-World Vision-Language Understanding | https://arxiv.org/abs/2403.05525 | 2024-03 |
-| 6 | DeepSeek-V2: A Strong, Economical, and Efficient MoE LM | https://arxiv.org/abs/2405.04434 | 2024-05 |
-| 7 | DeepSeek-Prover: Advancing Theorem Proving via Large-Scale Synthetic Data | https://arxiv.org/abs/2405.14333 | 2024-05 |
-| 8 | DeepSeek-Coder-V2: Breaking the Barrier of Closed-Source Models in Code Intelligence | https://arxiv.org/abs/2406.11931 | 2024-06 |
-| 9 | DeepSeek-Prover-V1.5: Harnessing Proof Assistant Feedback for RL and MCTS | https://arxiv.org/abs/2408.08152 | 2024-08 |
-| 10 | Janus: Decoupling Visual Encoding for Unified Multimodal Understanding and Generation | https://arxiv.org/abs/2410.13848 | 2024-10 |
-| 11 | DeepSeek-VL2: Mixture-of-Experts Vision-Language Models | https://arxiv.org/abs/2412.10302 | 2024-12 |
-| 12 | DeepSeek-V3 Technical Report | https://arxiv.org/abs/2412.19437 | 2024-12 |
-| 13 | Janus-Pro: Unified Multimodal Understanding and Generation with Data and Model Scaling | https://arxiv.org/abs/2501.02707 | 2025-01 |
-| 14 | DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning | https://arxiv.org/abs/2501.12948 | 2025-01 |
-| 15 | Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention | https://arxiv.org/abs/2502.11089 | 2025-02 |
-| 16 | DeepSeek-Prover-V2: Advancing Formal Mathematical Reasoning via RL for Subgoal Decomposition | https://arxiv.org/abs/2504.21801 | 2025-04 |
-| 17 | DeepSeek-OCR: Contexts Optical Compression | https://arxiv.org/abs/2510.18234 | 2025-10 |
-| 18 | DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models | https://arxiv.org/abs/2512.02556 | 2025-12 |
+| 5 | DeepSeek-V2: A Strong, Economical, and Efficient MoE LM | https://arxiv.org/abs/2405.04434 | 2024-05 |
+| 6 | DeepSeek-Prover: Advancing Theorem Proving via Large-Scale Synthetic Data | https://arxiv.org/abs/2405.14333 | 2024-05 |
+| 7 | DeepSeek-Coder-V2: Breaking the Barrier of Closed-Source Models in Code Intelligence | https://arxiv.org/abs/2406.11931 | 2024-06 |
+| 8 | DeepSeek-Prover-V1.5: Harnessing Proof Assistant Feedback for RL and MCTS | https://arxiv.org/abs/2408.08152 | 2024-08 |
+| 9 | DeepSeek-V3 Technical Report | https://arxiv.org/abs/2412.19437 | 2024-12 |
+| 10 | DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning | https://arxiv.org/abs/2501.12948 | 2025-01 |
+| 11 | Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention | https://arxiv.org/abs/2502.11089 | 2025-02 |
+| 12 | DeepSeek-Prover-V2: Advancing Formal Mathematical Reasoning via RL for Subgoal Decomposition | https://arxiv.org/abs/2504.21801 | 2025-04 |
+| 13 | DeepSeek-OCR: Contexts Optical Compression | https://arxiv.org/abs/2510.18234 | 2025-10 |
+| 14 | DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models | https://arxiv.org/abs/2512.02556 | 2025-12 |
+| 15 | DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence | https://arxiv.org/abs/2606.19348 | 2026-04 |
 
-> 注：DeepSeekMath-V2（2025-11，基于 V3.2-Exp）、DeepSeek-V3.1（2025-08）、V3.2-Exp（2025-09，DSA 实验版）、R1-0528（2025-05）、DeepSeek-V4 Preview（2026-04，1M 上下文）主要以模型/技术博客形式发布；V4 完整技术报告截至 2026-06 待发布。
+> 注：DeepSeekMath-V2（2025-11，基于 V3.2-Exp）、DeepSeek-V3.1（2025-08）、V3.2-Exp（2025-09，DSA 实验版）、R1-0528（2025-05）主要以模型/技术博客形式发布。
 
 ### 推荐阅读顺序
 
@@ -804,17 +776,12 @@ Math (2402.03300) → Prover (2405.14333) → Prover-V1.5 (2408.08152) → R1 (2
 
 **效率 / 注意力线**（长上下文）：
 ```
-MLA (V2, 2405.04434) → NSA (2502.11089) → DSA (V3.2-Exp/V3.2, 2512.02556) → V4 1M 上下文 (2026-04)
+MLA (V2, 2405.04434) → NSA (2502.11089) → DSA (V3.2-Exp/V3.2, 2512.02556) → CSA+HCA (V4, 2606.19348, 1M 上下文)
 ```
 
 **代码能力线**：
 ```
 Coder (2401.14196) → Coder-V2 (2406.11931)
-```
-
-**多模态线**：
-```
-VL (2403.05525) → Janus (2410.13848) → VL2 (2412.10302) → Janus-Pro (2501.02707)
 ```
 
 #### 路线 C：应急面试准备（2-3 天速读）

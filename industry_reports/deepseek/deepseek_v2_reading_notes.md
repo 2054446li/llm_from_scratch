@@ -266,5 +266,4 @@ $$\text{score}_{ij} = (W^{UK}_i \mathbf{c}_j^{KV})^\top (W^{UQ}_i \mathbf{c}_t^Q
 - [[9_grpo]] — GRPO 完整公式、vs PPO 三差异
 - [[10_process_reward_model]] — PRM（过程奖励，V2 未用，对照概念）
 - [[11_yarn]] — YaRN 长上下文扩展（V2 用其 4K→128K）
-- [[12_kv_cache]] — KV Cache 基础与优化方向（MLA 的问题背景）
-- [[13_mla]] — 多头潜在注意力（V2 核心架构创新，KV 压缩 SOTA）
+- [[12_deepseek_v2]] — 本论文的知识入口卡（核心信息速记与索引）

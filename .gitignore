@@ -13,3 +13,7 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Python 虚拟环境
+.venv/
+venv/

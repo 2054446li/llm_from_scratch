@@ -40,4 +40,5 @@ $$\theta_t = \theta_{t-1} - \eta \cdot \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsi
 
 ## 参考文献
 
+
 - Loshchilov, I., & Hutter, F. (2017). Decoupled Weight Decay Regularization.

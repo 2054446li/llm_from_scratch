@@ -1,0 +1,2589 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="通用深度学习、SFT、RL 前置知识、DeepSeek 系列与 DeepSeek-V4 后训练逐题复习站">
+  <title>深度学习 × SFT × DeepSeek 复习台</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --surface: #0e1a2d;
+      --surface-2: #14243b;
+      --surface-3: #1b2e49;
+      --text: #edf5ff;
+      --muted: #91a7c3;
+      --line: rgba(168, 197, 232, .17);
+      --blue: #5ec8ff;
+      --cyan: #55e1cf;
+      --amber: #ffc766;
+      --red: #ff7c8f;
+      --green: #7ee2a8;
+      --purple: #b9a4ff;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .32);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% -10%, rgba(94, 200, 255, .18), transparent 31rem),
+        radial-gradient(circle at 100% 20%, rgba(85, 225, 207, .12), transparent 34rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    a { color: var(--blue); }
+    code, .formula {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .skip-link {
+      position: fixed;
+      left: 18px;
+      top: -80px;
+      z-index: 100;
+      padding: 10px 14px;
+      color: #04101c;
+      background: var(--cyan);
+      border-radius: 10px;
+      transition: top .2s ease;
+    }
+    .skip-link:focus { top: 18px; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-height: 68px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(8, 17, 31, .86);
+      backdrop-filter: blur(18px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: max-content;
+      font-weight: 820;
+      letter-spacing: -.02em;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      color: #03111d;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      border-radius: 11px;
+      box-shadow: 0 7px 24px rgba(85, 225, 207, .26);
+    }
+    .search-wrap { position: relative; flex: 1; max-width: 680px; }
+    .search-wrap input {
+      width: 100%;
+      padding: 10px 42px 10px 15px;
+      color: var(--text);
+      background: rgba(255,255,255,.055);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+    }
+    .search-wrap input:focus { border-color: rgba(94, 200, 255, .72); box-shadow: 0 0 0 3px rgba(94, 200, 255, .12); }
+    .search-wrap kbd {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    kbd {
+      padding: 2px 7px;
+      color: var(--muted);
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .top-actions { display: flex; gap: 8px; margin-left: auto; }
+    .sidebar-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: max-content;
+      padding: 9px 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      cursor: pointer;
+    }
+    .sidebar-toggle:hover { color: var(--text); border-color: rgba(94,200,255,.38); }
+    .sidebar-toggle .menu-icon { color: var(--blue); font-size: 17px; line-height: 1; }
+    .icon-btn, .soft-btn, .primary-btn, .status-btn {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+    .icon-btn:hover, .soft-btn:hover, .primary-btn:hover, .status-btn:hover { transform: translateY(-1px); }
+    .icon-btn { padding: 9px 12px; background: rgba(255,255,255,.05); }
+    .soft-btn { padding: 9px 13px; background: rgba(255,255,255,.05); }
+    .primary-btn {
+      padding: 10px 16px;
+      color: #03121d;
+      font-weight: 780;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      border-color: transparent;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      max-width: 1540px;
+      margin: 0 auto;
+      transition: grid-template-columns .24s ease;
+    }
+    .shell.sidebar-collapsed { grid-template-columns: 0 minmax(0, 1fr); }
+    .sidebar {
+      position: sticky;
+      top: 68px;
+      align-self: start;
+      min-width: 0;
+      height: calc(100vh - 68px);
+      padding: 26px 18px 32px;
+      overflow-y: auto;
+      border-right: 1px solid var(--line);
+      transition: opacity .16s ease, padding .24s ease, border-color .16s ease;
+    }
+    .shell.sidebar-collapsed .sidebar {
+      padding-left: 0;
+      padding-right: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      border-right-color: transparent;
+    }
+    .side-label {
+      margin: 0 10px 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .module-btn {
+      width: 100%;
+      margin: 4px 0;
+      padding: 12px 13px;
+      text-align: left;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 13px;
+      cursor: pointer;
+    }
+    .module-btn:hover { background: rgba(255,255,255,.04); }
+    .module-btn.active {
+      background: linear-gradient(90deg, rgba(94,200,255,.14), rgba(85,225,207,.06));
+      border-color: rgba(94,200,255,.25);
+    }
+    .module-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 730; }
+    .module-meta { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .mini-track { height: 4px; margin-top: 8px; overflow: hidden; background: rgba(255,255,255,.07); border-radius: 99px; }
+    .mini-track span { display: block; height: 100%; background: linear-gradient(90deg, var(--blue), var(--cyan)); border-radius: inherit; }
+    .side-card {
+      margin-top: 24px;
+      padding: 15px;
+      color: var(--muted);
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      font-size: 13px;
+    }
+    .side-card strong { display: block; margin-bottom: 5px; color: var(--amber); }
+
+    main { min-width: 0; padding: 38px 42px 90px; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 34px 36px;
+      background: linear-gradient(135deg, rgba(20,36,59,.96), rgba(14,26,45,.95));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -90px;
+      top: -110px;
+      width: 330px;
+      height: 330px;
+      background: conic-gradient(from 120deg, rgba(85,225,207,.24), rgba(94,200,255,.04), rgba(185,164,255,.17));
+      border-radius: 50%;
+      filter: blur(10px);
+    }
+    .eyebrow { color: var(--cyan); font-size: 13px; font-weight: 820; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { position: relative; z-index: 1; max-width: 870px; margin: 8px 0 12px; font-size: clamp(30px, 4vw, 56px); line-height: 1.1; letter-spacing: -.045em; }
+    .hero p { position: relative; z-index: 1; max-width: 850px; margin: 0; color: #afc0d6; }
+    .stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .stat { padding: 13px 15px; background: rgba(2,12,23,.36); border: 1px solid var(--line); border-radius: 14px; }
+    .stat b { display: block; font-size: 24px; line-height: 1.2; }
+    .stat span { color: var(--muted); font-size: 12px; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 9px;
+      margin: 25px 0 16px;
+    }
+    .toolbar .spacer { flex: 1; }
+    .filter-btn {
+      padding: 8px 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .filter-btn.active { color: var(--text); background: rgba(94,200,255,.13); border-color: rgba(94,200,255,.38); }
+    .result-count { color: var(--muted); font-size: 13px; }
+
+    .focus-card {
+      background: rgba(14, 26, 45, .92);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .focus-head { padding: 25px 28px 18px; border-bottom: 1px solid var(--line); }
+    .badges { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+    .badge { padding: 3px 9px; font-size: 12px; font-weight: 760; border-radius: 999px; }
+    .badge.module { color: var(--blue); background: rgba(94,200,255,.12); }
+    .badge.level { color: var(--amber); background: rgba(255,199,102,.12); }
+    .badge.origin { color: var(--purple); background: rgba(185,164,255,.12); }
+    .question-index { margin-left: auto; color: var(--muted); font-size: 12px; }
+    .question-title { margin: 0; font-size: clamp(23px, 3vw, 34px); line-height: 1.35; letter-spacing: -.025em; }
+    .answer-pad { padding: 22px 28px; background: rgba(3, 14, 27, .34); border-bottom: 1px solid var(--line); }
+    .answer-pad label { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+    .answer-pad textarea {
+      width: 100%;
+      min-height: 104px;
+      resize: vertical;
+      padding: 13px 14px;
+      color: var(--text);
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+    }
+    .answer-pad textarea:focus { border-color: rgba(85,225,207,.5); }
+    .focus-actions { display: flex; flex-wrap: wrap; gap: 9px; padding: 18px 28px; border-bottom: 1px solid var(--line); }
+    .answer-content { padding: 10px 28px 30px; }
+    .answer-content[hidden] { display: none; }
+    .one-line {
+      margin: 20px 0;
+      padding: 16px 18px;
+      color: #dffefa;
+      background: linear-gradient(90deg, rgba(85,225,207,.13), rgba(94,200,255,.06));
+      border-left: 4px solid var(--cyan);
+      border-radius: 0 12px 12px 0;
+    }
+    .answer-section { margin-top: 23px; }
+    .answer-section h3 { margin: 0 0 9px; color: #d7e9ff; font-size: 17px; }
+    .answer-section p { margin: 7px 0; color: #bccce0; }
+    .answer-section ul, .answer-section ol { margin: 7px 0; padding-left: 23px; color: #bccce0; }
+    .answer-section li + li { margin-top: 6px; }
+    .formula {
+      overflow-x: auto;
+      margin: 14px 0;
+      padding: 14px 16px;
+      color: #dbe8ff;
+      background: #07111e;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      white-space: pre-wrap;
+    }
+    .trap { color: #ffd9df !important; }
+    .source-links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .source-links a { padding: 5px 9px; text-decoration: none; background: rgba(94,200,255,.08); border: 1px solid rgba(94,200,255,.2); border-radius: 8px; font-size: 12px; }
+    .rating { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 28px 25px; background: rgba(3,14,27,.28); border-radius: 0 0 var(--radius) var(--radius); }
+    .rating-label { width: 100%; color: var(--muted); font-size: 12px; }
+    .status-btn { flex: 1; min-width: 110px; padding: 10px 12px; background: rgba(255,255,255,.035); }
+    .status-btn[data-status="weak"] { color: var(--red); }
+    .status-btn[data-status="fuzzy"] { color: var(--amber); }
+    .status-btn[data-status="mastered"] { color: var(--green); }
+    .status-btn.selected { background: rgba(255,255,255,.105); border-color: currentColor; }
+
+    .navigator { display: flex; align-items: center; gap: 10px; margin: 14px 0 32px; }
+    .navigator .soft-btn { flex: 1; }
+    .question-map { margin-top: 34px; }
+    .section-title { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 13px; }
+    .section-title h2 { margin: 0; font-size: 24px; }
+    .section-title p { margin: 0; color: var(--muted); font-size: 13px; }
+    .question-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .question-jump {
+      display: grid;
+      grid-template-columns: 33px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      padding: 13px;
+      text-align: left;
+      background: rgba(255,255,255,.028);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      cursor: pointer;
+    }
+    .question-jump:hover, .question-jump.active { background: rgba(94,200,255,.075); border-color: rgba(94,200,255,.28); }
+    .q-num { display: grid; place-items: center; width: 30px; height: 30px; color: var(--muted); background: rgba(255,255,255,.05); border-radius: 9px; font-size: 12px; }
+    .q-copy b { display: block; line-height: 1.45; }
+    .q-copy small { color: var(--muted); }
+    .q-state { width: 9px; height: 9px; margin-top: 10px; background: rgba(255,255,255,.14); border-radius: 50%; }
+    .q-state.weak { background: var(--red); }
+    .q-state.fuzzy { background: var(--amber); }
+    .q-state.mastered { background: var(--green); }
+    .empty { padding: 38px; color: var(--muted); text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); }
+
+    .sources {
+      margin-top: 42px;
+      padding: 24px;
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .sources h2 { margin-top: 0; }
+    .sources-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; }
+    .sources a { overflow-wrap: anywhere; }
+    .sources p { margin: 6px 0; color: var(--muted); font-size: 13px; }
+
+    .mobile-nav { display: none; }
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 50;
+      padding: 10px 14px;
+      color: #061321;
+      background: var(--cyan);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .shell.sidebar-collapsed { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .sidebar-toggle { display: none; }
+      main { padding: 26px 20px 78px; }
+      .mobile-nav { display: block; margin: 18px 0; }
+      .mobile-nav select { width: 100%; padding: 11px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+      .question-list, .sources-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .topbar { padding: 10px 14px; flex-wrap: wrap; }
+      .brand span:last-child { display: none; }
+      .search-wrap { order: 3; flex-basis: 100%; max-width: none; }
+      .top-actions .icon-btn:first-child { display: none; }
+      main { padding: 20px 13px 70px; }
+      .hero { padding: 25px 21px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .focus-head, .answer-pad, .focus-actions, .answer-content, .rating { padding-left: 19px; padding-right: 19px; }
+      .question-index { margin-left: 0; width: 100%; }
+      .navigator { flex-wrap: wrap; }
+      .navigator .soft-btn { min-width: calc(50% - 5px); }
+    }
+    @media print {
+      body { color: #111; background: #fff; }
+      .topbar, .sidebar, .toolbar, .answer-pad, .focus-actions, .rating, .navigator, .question-map, .mobile-nav, .toast { display: none !important; }
+      .shell { display: block; }
+      main { padding: 0; }
+      .hero, .focus-card, .sources { color: #111; background: #fff; box-shadow: none; border-color: #bbb; }
+      .answer-content[hidden] { display: block; }
+      .answer-section p, .answer-section ul, .answer-section ol, .hero p, .sources p { color: #222; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#study-card">跳到当前题目</a>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">DS</span><span>深度学习 × SFT × DeepSeek</span></div>
+    <button class="sidebar-toggle" id="toggleSidebarBtn" type="button" aria-expanded="true" aria-controls="studySidebar" title="收起目录（快捷键：[）">
+      <span class="menu-icon" aria-hidden="true">☰</span><span id="sidebarToggleLabel">收起目录</span>
+    </button>
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="搜索题目、概念或答案，例如 packing / OPD / 灾难性遗忘" aria-label="搜索复习题">
+      <kbd>/</kbd>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="shortcutsBtn" type="button">快捷键</button>
+      <button class="icon-btn" id="exportBtn" type="button">导出</button>
+      <button class="icon-btn" id="importBtn" type="button">导入</button>
+      <button class="icon-btn" id="resetBtn" type="button">重置</button>
+      <input id="progressFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <div class="shell" id="appShell">
+    <aside class="sidebar" id="studySidebar" aria-label="复习模块">
+      <p class="side-label">Modules</p>
+      <div id="moduleNav"></div>
+      <div class="side-card">
+        <strong>推荐节奏</strong>
+        先用 60–90 秒口述，再揭晓答案。答错不要立即重读全文：先找缺失的关键词，再复述一遍。
+      </div>
+      <div class="side-card">
+        <strong>状态定义</strong>
+        不会：无法组织答案；模糊：主干正确但缺关键条件；掌握：能回答并处理追问。
+      </div>
+      <div class="side-card">
+        <strong>换电脑使用</strong>
+        复制整个仓库即可保持资料链接有效。浏览器进度不会自动迁移；离开旧电脑前点“导出”，在新电脑点“导入”。
+      </div>
+    </aside>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow">Local · Active Recall · Interview Ready</div>
+        <h1>从通用深度学习，到 SFT 与 DeepSeek‑V4 后训练</h1>
+        <p>内容以当前仓库笔记为骨架，补齐通用深度学习、数据工程、训练实现、故障诊断与 V4 基础设施细节。标记为“校正”的题目专门修复旧笔记里的绝对化结论。</p>
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <div class="mobile-nav">
+        <select id="mobileModule" aria-label="选择复习模块"></select>
+      </div>
+
+      <div class="toolbar" aria-label="题目筛选">
+        <button class="filter-btn active" data-filter="all" type="button">全部</button>
+        <button class="filter-btn" data-filter="unseen" type="button">未复习</button>
+        <button class="filter-btn" data-filter="weak" type="button">不会</button>
+        <button class="filter-btn" data-filter="fuzzy" type="button">模糊</button>
+        <button class="filter-btn" data-filter="mastered" type="button">掌握</button>
+        <span class="spacer"></span>
+        <span class="result-count" id="resultCount"></span>
+      </div>
+
+      <section class="focus-card" id="study-card" aria-live="polite"></section>
+      <div class="navigator">
+        <button class="soft-btn" id="prevBtn" type="button">← 上一题 <kbd>K</kbd></button>
+        <button class="soft-btn" id="randomBtn" type="button">随机薄弱题</button>
+        <button class="soft-btn" id="nextBtn" type="button">下一题 <kbd>J</kbd> →</button>
+      </div>
+
+      <section class="question-map">
+        <div class="section-title">
+          <h2>当前题库</h2>
+          <p>点击任意题目跳转</p>
+        </div>
+        <div class="question-list" id="questionList"></div>
+      </section>
+
+      <section class="sources">
+        <h2>本地材料索引</h2>
+        <div class="sources-grid">
+          <p><a href="ch07_sft.md">SFT 面试提纲</a>：目标、mask、模板、遗忘、LoRA 与常见坑。</p>
+          <p><a href="ch01_transformer_attention.md">Transformer 与注意力</a>：MHA/MQA/GQA/MLA、FlashAttention、KV Cache。</p>
+          <p><a href="ch03_norm_activation.md">归一化与激活</a>：LayerNorm、RMSNorm、SwiGLU 与训练稳定性。</p>
+          <p><a href="ch04_moe.md">MoE 面试提纲</a>：路由、负载均衡、token drop。</p>
+          <p><a href="ch05_training_system.md">训练系统与优化器</a>：AdamW、混合精度、ZeRO 与 3D 并行。</p>
+          <p><a href="../industry_reports/deepseek/deepseek_llm_reading_notes.md">DeepSeek LLM 阅读笔记</a>：两阶段 SFT、重复率与 DPO。</p>
+          <p><a href="../industry_reports/deepseek/deepseek_v2_reading_notes.md">DeepSeek‑V2 阅读笔记</a>：MLA、GRPO 与两阶段 RL。</p>
+          <p><a href="../industry_reports/deepseek/deepseek_v3_reading_notes.md">DeepSeek‑V3 阅读笔记</a>：无辅助损失均衡、MTP、R1 数据蒸馏。</p>
+          <p><a href="../industry_reports/deepseek/deepseek-R1_reading_notes.md">DeepSeek‑R1 阅读笔记</a>：R1‑Zero 与四阶段训练。</p>
+          <p><a href="../industry_reports/deepseek/deepseek_v32_reading_notes.md">DeepSeek‑V3.2 阅读笔记</a>：DSA、混合 RL 与离策略稳定性。</p>
+          <p><a href="../common_knowledge/21_on_policy_distillation.md">OPD 知识笔记</a>：on-policy 轨迹、reverse KL 与密集监督。</p>
+          <p><a href="../industry_reports/deepseek/deepseek_v4.pdf#page=28">DeepSeek‑V4 论文第 5 章</a>：后训练 pipeline、OPD 与基础设施。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    "use strict";
+
+    const MODULES = {
+      all: { title: "全部题目", short: "全部" },
+      dl: { title: "通用深度学习高频题", short: "深度学习" },
+      sft: { title: "SFT 经典问题", short: "SFT" },
+      prereq: { title: "RL 前置地基", short: "前置" },
+      deepseek: { title: "DeepSeek 系列回顾", short: "DeepSeek" },
+      v4: { title: "V4 后训练精读", short: "V4" }
+    };
+
+    const questions = [
+      {
+        id: "dl-01", module: "dl", topic: "反向传播", level: "必会", origin: "补充",
+        question: "反向传播的本质是什么？它与梯度下降是什么关系？",
+        answer: "反向传播是在计算图上应用链式法则，高效求出损失对每个参数的梯度；梯度下降则利用这些梯度更新参数。前者负责‘怎么算梯度’，后者负责‘怎样走一步’。",
+        formula: "若 L=f(g(x))，则 ∂L/∂x=(∂L/∂g)(∂g/∂x)\n参数更新：θ←θ-η∇_θL",
+        sections: [
+          ["计算图", "前向保存必要中间量；反向从标量 loss 开始，按拓扑逆序传播 vector-Jacobian product，并把多个下游分支的梯度相加。"],
+          ["为什么高效", "逐参数有限差分需 O(P) 次前向；reverse-mode autodiff 对标量输出一次反向即可获得全部 P 个参数梯度，代价通常是若干倍前向。"],
+          ["工程", "autograd 默认累积梯度，因此每次更新前要正确清零；detach、no_grad、in-place 修改和 checkpointing 都会改变计算图与保存策略。"]
+        ],
+        traps: ["反向传播不是一种优化器。", "梯度为零可能来自饱和/断图/错误 detach，而不只是达到最优点。"],
+        followups: ["为什么标量 loss 适合 reverse-mode autodiff？", "梯度累积为什么要对 loss 做正确缩放？"]
+      },
+      {
+        id: "dl-02", module: "dl", topic: "优化器", level: "必会", origin: "已有＋补充",
+        question: "SGD、Momentum、Nesterov、Adam、AdamW 的核心差别是什么？",
+        answer: "SGD 使用当前小批梯度；Momentum 累积速度平滑噪声并加速一致方向；Nesterov 在前瞻位置估梯度；Adam 用一二阶矩做逐参数自适应缩放；AdamW 再把权重衰减与梯度解耦。",
+        sections: [
+          ["更新直觉", ["SGD：简单、常有良好泛化，但对尺度和学习率敏感。", "Momentum：像带惯性的球，穿过狭长谷地。", "Nesterov：先前瞻再纠偏。", "Adam：不同参数获得不同有效步长，早期收敛快。"]],
+          ["选择", "CNN 从头训练常见 SGD+Momentum；Transformer/LLM 几乎默认 AdamW。实际优劣依赖 batch、调度、正则和计算预算。"],
+          ["状态开销", "SGD 几乎无额外状态，Momentum 每参数一个速度，Adam/AdamW 通常每参数保存 m、v，因此优化器状态显存明显更高。"]
+        ],
+        traps: ["Adam 不等于 AdamW；把 L2 加到 Adam 梯度中会被自适应尺度改变。", "自适应优化器收敛快不代表最终泛化一定更好。"],
+        followups: ["Momentum 如何缓解峡谷方向震荡？", "Adam 的 bias correction 修正什么？"],
+        sources: [["训练系统", "ch05_training_system.md"], ["AdamW 笔记", "../common_knowledge/3_adamw.md"]]
+      },
+      {
+        id: "dl-03", module: "dl", topic: "损失函数", level: "必会", origin: "补充",
+        question: "MSE、BCE、Cross‑Entropy 分别适合什么任务？它们与最大似然有什么关系？",
+        answer: "MSE 常对应高斯噪声回归；BCE 对每个二元标签建 Bernoulli；多类交叉熵对 categorical 分布做负对数似然。选择损失应匹配输出概率模型和标签结构。",
+        formula: "MSE=(1/N)Σ(y-ŷ)²\nBCE=-[y log p+(1-y)log(1-p)]\nCE=-Σ_c y_c log p_c",
+        sections: [
+          ["任务", ["回归：MSE/MAE/Huber，取决于异常值与噪声假设。", "二分类或多标签：每类 sigmoid＋BCE。", "互斥多分类：softmax＋CE。"]],
+          ["logits 版", "BCEWithLogitsLoss 与 CrossEntropyLoss 把激活和 log-loss 合并，用稳定公式避免先 sigmoid/softmax 后取 log 的下溢。"],
+          ["标签", "多标签各类可同时为 1，不能用单个 softmax；互斥多类概率和为 1，不应使用独立 sigmoid 代替。"]
+        ],
+        traps: ["对 logits 手动 softmax 后再传给 CrossEntropyLoss 往往会重复 softmax。", "分类准确率不平衡时，低 loss 不保证少数类可用。"],
+        followups: ["Huber loss 为什么比 MSE 抗异常值？", "多标签任务为什么用 sigmoid 而非 softmax？"]
+      },
+      {
+        id: "dl-04", module: "dl", topic: "Softmax", level: "必会", origin: "补充",
+        question: "Softmax 为什么要减去最大 logit？Cross‑Entropy 与 Softmax 为什么常合并实现？",
+        answer: "softmax 对整体平移不变，先减最大值可让最大指数为 1，避免 exp 溢出；与交叉熵合并后可用 log-sum-exp 直接计算 log probability，减少下溢并得到简洁稳定梯度。",
+        formula: "softmax(z_i)=exp(z_i-m)/Σ_j exp(z_j-m), m=max(z)\nCE(z,y)=logΣ_j exp(z_j)-z_y",
+        sections: [
+          ["梯度", "one-hot 标签下，交叉熵对 logit 的梯度为 p_i-y_i；预测概率高于标签目标就向下压，低于目标就上拉。"],
+          ["温度", "softmax(z/T)：T>1 分布更平，T<1 更尖。蒸馏用较高温度暴露类别间的暗知识，推理温度调节采样多样性。"],
+          ["数值", "极低精度中还需对 reduction、mask 的 -∞、全 mask 行和大词表归约做特殊处理。"]
+        ],
+        traps: ["减最大值不会改变 softmax 结果。", "所有位置被 mask 时 softmax 可能出现 0/0 或 NaN。"],
+        followups: ["为什么 CE 梯度是 p-y？", "蒸馏温度升高后为什么常乘 T²？"]
+      },
+      {
+        id: "dl-05", module: "dl", topic: "梯度稳定性", level: "必会", origin: "补充",
+        question: "梯度消失与梯度爆炸为什么发生？常见解决办法有哪些？",
+        answer: "深层链式乘积反复乘 Jacobian：奇异值长期小于 1 使梯度衰减，大于 1 使梯度爆炸。残差连接、合适初始化、归一化、非饱和激活、门控结构和梯度裁剪分别从传播与更新层面缓解。",
+        sections: [
+          ["来源", ["sigmoid/tanh 饱和区导数很小。", "RNN 长时间步共享矩阵反复相乘。", "深层网络尺度失配或学习率过大。", "低精度溢出和异常 batch。"]],
+          ["缓解消失", ["ReLU/GELU/SiLU 等非饱和激活。", "Xavier/He 初始化。", "Residual/skip connections。", "LSTM/GRU 门控与规范化。"]],
+          ["缓解爆炸", ["global norm clipping。", "降低 LR、warmup。", "稳定 norm/softmax 和高精度累加。", "排查数据、loss scale、除零与错误 mask。"]]
+        ],
+        traps: ["gradient clipping 只限制爆炸更新，不能解决梯度消失。", "NaN 不总是梯度爆炸，也可能来自前向数值非法。"],
+        followups: ["残差连接如何提供短梯度路径？", "为什么 RNN 比前馈网络更易出现长程梯度问题？"]
+      },
+      {
+        id: "dl-06", module: "dl", topic: "参数初始化", level: "必会", origin: "补充",
+        question: "Xavier 与 He 初始化分别基于什么假设？为什么不能全零初始化？",
+        answer: "Xavier 让线性/tanh 网络前后向方差近似保持，尺度与 fan_in、fan_out 有关；He 针对 ReLU 一半激活被截断，方差约取 2/fan_in。全零会让同层神经元保持对称、学到相同特征。",
+        formula: "Xavier: Var(W)≈2/(fan_in+fan_out)\nHe: Var(W)≈2/fan_in",
+        sections: [
+          ["目标", "让不同深度的激活与梯度保持可控尺度，避免一开始就饱和、消失或爆炸。"],
+          ["对称性", "同层权重若完全相同，接收相同梯度，后续仍相同；随机初始化打破这种对称。bias 可以初始化为零，因为权重已经区分神经元。"],
+          ["Transformer", "还会结合 residual scaling、深度相关缩放、μP/初始化配方与 Norm 位置，不能只套一个 Xavier 公式。"]
+        ],
+        traps: ["初始化只保证训练起点的统计性质，不能替代归一化和学习率设计。"],
+        followups: ["fan_in 与 fan_out 分别是什么？", "为什么 ReLU 的 He 方差多一个 2？"]
+      },
+      {
+        id: "dl-07", module: "dl", topic: "激活函数", level: "必会", origin: "已有＋补充",
+        question: "Sigmoid、Tanh、ReLU、Leaky ReLU、GELU、SiLU 的主要差别是什么？",
+        answer: "Sigmoid/Tanh 平滑但易饱和；ReLU 简单高效但有死神经元；Leaky ReLU 保留负半轴小梯度；GELU/SiLU 平滑门控输入，现代 Transformer 常用 GELU 或 SwiGLU/SiLU。",
+        sections: [
+          ["范围与中心", ["Sigmoid 输出 (0,1)，适合概率门。", "Tanh 输出 (-1,1)，零中心但两端饱和。", "ReLU=max(0,x)，正半轴不饱和。"]],
+          ["平滑激活", "GELU 可看作按输入概率加权，SiLU=x·sigmoid(x)；二者负区间不完全为零，梯度更平滑。"],
+          ["选择", "CNN 经典上常用 ReLU 家族；BERT 用 GELU；Llama/DeepSeek 常用 SwiGLU，即 SiLU 门控的 GLU 变体。"]
+        ],
+        traps: ["激活函数优劣取决于架构、初始化与算力；不存在脱离任务的全局最优。"],
+        followups: ["dying ReLU 是什么？", "SwiGLU 为什么需要三个投影矩阵？"],
+        sources: [["归一化与激活", "ch03_norm_activation.md"], ["SwiGLU 笔记", "../common_knowledge/2_swiglu.md"]]
+      },
+      {
+        id: "dl-08", module: "dl", topic: "归一化", level: "必会", origin: "已有＋补充",
+        question: "BatchNorm、LayerNorm、GroupNorm、InstanceNorm、RMSNorm 分别沿哪些维度归一化？",
+        answer: "BN 对 batch 与空间维统计每个 channel；LN 对单样本特征维；GN 在单样本内按 channel 分组；IN 对单样本每 channel 的空间维；RMSNorm 对特征维只做均方根缩放。",
+        sections: [
+          ["适用", ["BN：大 batch CNN，利用批统计并带正则效果。", "LN/RMSNorm：序列模型和 LLM，不依赖 batch。", "GN：小 batch 视觉任务。", "IN：风格迁移等需要消除实例对比度的任务。"]],
+          ["可学习参数", "通常仍有 affine scale/shift；RMSNorm 常只有 scale。归一化不是把表示永久限制为标准正态，而是先标准化再学习重标定。"],
+          ["分布式", "BN 在每卡 batch 小时可用 SyncBN 跨设备同步统计，但增加通信；LN/GN 不需要跨样本同步。"]
+        ],
+        traps: ["LN 并不是沿 sequence length 归一化，而通常沿每个 token 的 hidden/features。", "RMSNorm 不做均值中心化。"],
+        followups: ["为什么 LLM 通常不用 BatchNorm？", "GroupNorm 的 group=1 与 group=C 分别接近什么？"],
+        sources: [["归一化与激活", "ch03_norm_activation.md"], ["RMSNorm 笔记", "../common_knowledge/1_rms_norm.md"]]
+      },
+      {
+        id: "dl-09", module: "dl", topic: "BatchNorm", level: "高频", origin: "补充",
+        question: "BatchNorm 训练和推理阶段有什么不同？小 batch 为什么容易出问题？",
+        answer: "训练使用当前 mini-batch 的均值/方差并更新 running statistics；推理使用冻结的运行统计。batch 太小时估计噪声大、训练/推理统计不匹配，性能可能不稳。",
+        sections: [
+          ["训练", "对每个 channel 统计 batch 与空间位置，标准化后乘 γ 加 β；running mean/var 以动量更新，仅用于 eval。"],
+          ["推理", "必须切换 eval mode，否则单样本推理会继续用当前 batch 统计并修改 running stats，输出依赖同批其他样本。"],
+          ["替代", "增大 batch、SyncBN、冻结 BN、Ghost BN 或改用 GroupNorm/LayerNorm；迁移学习时是否更新 BN 统计需单独决定。"]
+        ],
+        traps: ["模型参数 requires_grad=False 不自动等于 BN 进入 eval mode。", "PyTorch momentum 与某些文献的移动平均系数定义方向可能相反。"],
+        followups: ["为什么 BN 带有随机正则效果？", "迁移学习时冻结权重但不冻结 running stats 会怎样？"]
+      },
+      {
+        id: "dl-10", module: "dl", topic: "偏差-方差", level: "必会", origin: "补充",
+        question: "Bias–Variance trade-off 如何用来诊断欠拟合与过拟合？",
+        answer: "训练误差和验证误差都高通常是高偏差/欠拟合；训练误差低而验证误差明显高通常是高方差/过拟合。应先确认数据与指标一致，再分别增加容量/优化或加强数据与正则。",
+        sections: [
+          ["高偏差", ["模型容量不足。", "特征/输入信息不足。", "优化未收敛或正则过强。", "解决：更强模型、训练更久、改善特征、减弱正则。"]],
+          ["高方差", ["数据少、噪声大、模型过强。", "训练集泄漏式记忆。", "解决：更多数据、增强、权重衰减、dropout、早停、简化模型。"]],
+          ["现代深度学习", "双下降等现象使简单 U 形故事不总成立；但 train–val gap 仍是非常实用的第一层诊断。"]
+        ],
+        traps: ["验证误差高不一定是过拟合，也可能 train/val 分布不同或标签有问题。"],
+        followups: ["数据分布漂移如何伪装成高方差？", "学习曲线随数据量增加能告诉你什么？"]
+      },
+      {
+        id: "dl-11", module: "dl", topic: "正则化", level: "必会", origin: "已有＋补充",
+        question: "L1、L2、weight decay 的作用和差别是什么？",
+        answer: "L1 惩罚绝对值，产生稀疏解；L2 惩罚平方，平滑收缩大权重；在普通 SGD 下 L2 与 weight decay 近似等价，但在 Adam 等自适应优化器中需要 AdamW 式解耦衰减。",
+        sections: [
+          ["L1", "在零点不可导，次梯度使许多参数精确归零，常用于特征选择和稀疏模型。"],
+          ["L2", "对大参数惩罚更强，使解更平滑；贝叶斯视角对应零均值高斯先验。"],
+          ["Weight decay", "直接把参数乘 (1-ηλ)。是否对 bias、norm scale、embedding 应用，要按参数组设置；现代大模型常排除 norm 与 bias。"]
+        ],
+        traps: ["Adam 中 loss 加 λ||θ||² 不等于 AdamW 的 decoupled decay。", "正则越强不一定越好，过强会欠拟合。"],
+        followups: ["L1 为什么产生稀疏？", "为什么 norm 参数常不做 decay？"],
+        sources: [["训练系统", "ch05_training_system.md"], ["AdamW 笔记", "../common_knowledge/3_adamw.md"]]
+      },
+      {
+        id: "dl-12", module: "dl", topic: "Dropout/增强/早停", level: "必会", origin: "已有＋补充",
+        question: "Dropout、数据增强、早停分别如何正则化？",
+        answer: "Dropout 随机屏蔽激活，降低特征共适应；数据增强注入任务不变性、扩大有效样本；早停在验证性能恶化前停止，限制参数对训练噪声的继续拟合。",
+        sections: [
+          ["Dropout", "训练时用 inverted dropout：保留激活除以 keep probability，使推理关闭 dropout 时期望一致。它可近似模型集成，但会增加训练噪声。"],
+          ["数据增强", "图像翻转/裁剪/颜色扰动、文本回译/噪声等必须保持标签语义；错误增强会引入 label noise。"],
+          ["早停", "保存最佳验证 checkpoint，而不是最后一步；patience 应考虑指标噪声和评测频率。"]
+        ],
+        traps: ["推理忘记 model.eval() 会让 dropout 随机、BN 继续更新。", "大规模 LLM 预训练常不用 dropout，不代表所有小数据任务都不需要正则。"],
+        followups: ["inverted dropout 为什么训练时要除以 keep probability？", "如何判断一种增强是否保持标签？"],
+        sources: [["归一化与激活", "ch03_norm_activation.md"]]
+      },
+      {
+        id: "dl-13", module: "dl", topic: "学习率", level: "必会", origin: "已有＋补充",
+        question: "为什么学习率常比优化器选择更重要？Warmup、Cosine、Step、Plateau、WSD 如何选？",
+        answer: "学习率直接决定每次更新尺度，过大不稳、过小欠拟合；warmup 稳定初期，cosine 平滑衰减，step 在预设里程碑跳降，plateau 根据验证指标自适应，WSD 便于长时间稳定训练后再统一衰减。",
+        sections: [
+          ["Warmup", "初始化与 optimizer moments 尚未稳定时逐步增大学习率；大 batch 和 Transformer 常见。"],
+          ["Decay", ["Cosine：已知总预算、希望平滑收敛。", "Step/MultiStep：经典视觉训练，里程碑明确。", "ReduceLROnPlateau：验证指标长期不改善时下降，适合小规模训练。", "WSD：warmup-stable-decay，方便延长 stable 阶段。"]],
+          ["调试", "同时看 loss、gradient norm、update norm 与有效 batch；学习率相同但 batch、参数化、精度和 optimizer 不同，实际更新不可直接比较。"]
+        ],
+        traps: ["warmup 不是越长越稳；短任务中过长 warmup 会让训练尚未到有效学习率就结束。"],
+        followups: ["线性缩放规则与 square-root scaling 分别在什么假设下使用？", "WSD 为什么利于持续训练？"],
+        sources: [["训练系统", "ch05_training_system.md"], ["学习率阶段", "../common_knowledge/5_learning_rate_stages.md"]]
+      },
+      {
+        id: "dl-14", module: "dl", topic: "Batch Size", level: "高频", origin: "补充",
+        question: "增大 batch size 会怎样影响梯度噪声、吞吐、泛化和学习率？",
+        answer: "大 batch 降低梯度方差、提高并行吞吐并允许更大学习率，但边际收益会在临界 batch 后饱和，也可能减少有益噪声、需要更强调度和正则；小 batch 噪声大、更新频繁，但硬件利用率较低。",
+        sections: [
+          ["统计", "mini-batch 梯度是全数据梯度的估计；batch 增大使估计方差下降，但样本相关性和类别分布也会影响有效 batch。"],
+          ["系统", "更大 batch 提高矩阵并行度，代价是激活显存；gradient accumulation 增大全局 batch，却不一定带来同样的单步硬件并行收益。"],
+          ["学习率", "在一定范围可用 linear/sqrt scaling 并配 warmup，但超过 critical batch 后继续增大只减少更新次数，未必加速收敛。"]
+        ],
+        traps: ["相同 global batch 不保证完全相同训练：BN 统计、dropout、optimizer step 频率和不等长 loss 加权会不同。"],
+        followups: ["什么是 gradient noise scale？", "梯度累积与真实大 micro-batch 有哪些差别？"]
+      },
+      {
+        id: "dl-15", module: "dl", topic: "类别不平衡", level: "必会", origin: "补充",
+        question: "类别不平衡有哪些处理办法？什么时候用 class weight、重采样或 focal loss？",
+        answer: "可在数据层过采少数类/欠采多数类，在损失层使用 class-balanced weight 或 focal loss，在决策层调整阈值；选择取决于样本量、噪声、概率校准和业务误报/漏报成本。",
+        formula: "Focal Loss = -α_t(1-p_t)^γ log p_t",
+        sections: [
+          ["重采样", "过采提高少数类曝光但可能过拟合；欠采降低多数类信息；合成采样需防止制造不真实样本。"],
+          ["加权与 Focal", "class weight 改变错误成本；focal 用 (1-p_t)^γ 降低易样本权重，聚焦难例，常用于目标检测。"],
+          ["评测", "不要只看 accuracy；报告每类 recall/precision、macro F1、PR-AUC，并根据业务成本选 threshold。"]
+        ],
+        traps: ["重加权后的输出概率可能失去原始先验校准，需要后处理。", "难样本中也包含错标，focal 可能放大 label noise。"],
+        followups: ["macro F1 与 micro F1 如何受类别频率影响？", "为什么阈值不一定固定为 0.5？"]
+      },
+      {
+        id: "dl-16", module: "dl", topic: "分类指标", level: "必会", origin: "补充",
+        question: "Precision、Recall、Specificity、F1、Macro/Micro/Weighted averaging 如何解释？",
+        answer: "Precision=预测为正中有多少真；Recall=真实正中找回多少；Specificity=真实负中排除多少；F1 是 precision/recall 调和平均。Macro 每类等权，Micro 汇总样本计数，Weighted 按类频加权。",
+        formula: "Precision=TP/(TP+FP)\nRecall=TP/(TP+FN)\nSpecificity=TN/(TN+FP)\nF1=2PR/(P+R)",
+        sections: [
+          ["业务", "诈骗检测常重 recall 但需控制误报；搜索/推荐 top 结果常重 precision；医疗筛查与确诊阶段的权重也不同。"],
+          ["多分类", "对每类做 one-vs-rest 后平均。Macro 暴露少数类表现，Micro 在单标签多分类中与 accuracy 密切相关。"],
+          ["阈值", "同一模型改变 threshold 会在 precision 与 recall 间移动，因此必须在固定业务约束下比较。"]
+        ],
+        traps: ["F1 不考虑 TN，负类极多的任务需结合 specificity/ROC/PR 和业务成本。", "Weighted F1 可能被多数类主导。"],
+        followups: ["为什么 F1 用调和平均而不是算术平均？", "多标签任务的 micro F1 怎么算？"]
+      },
+      {
+        id: "dl-17", module: "dl", topic: "ROC/PR 曲线", level: "必会", origin: "补充",
+        question: "ROC‑AUC 与 PR‑AUC 有什么差别？严重类别不平衡时为什么更关注 PR？",
+        answer: "ROC 绘制 TPR 对 FPR，AUC 衡量随机正样本得分高于随机负样本的概率；PR 绘制 precision 对 recall，直接受正类稀有度与误报影响，在正类极少时更能反映实际检出质量。",
+        sections: [
+          ["ROC", "FPR=FP/(FP+TN)。当 TN 极大时，即便 FP 数量很多，FPR 仍可能很小，曲线看起来乐观。"],
+          ["PR", "precision=TP/(TP+FP)，会直接惩罚大量假阳性；baseline 与正类比例相关，因此不同数据先验下 PR-AUC 不宜直接比较。"],
+          ["AUC 局限", "AUC 聚合所有阈值，但产品可能只关心极低 FPR 或特定 recall 区间，应报告局部曲线、operating point 与置信区间。"]
+        ],
+        traps: ["AUC 高不代表默认 0.5 阈值可用。", "跨数据集比较 PR-AUC 必须考虑 prevalence。"],
+        followups: ["ROC-AUC 的概率解释是什么？", "为什么 PR 曲线的 baseline 等于正类比例？"]
+      },
+      {
+        id: "dl-18", module: "dl", topic: "概率校准", level: "高频", origin: "补充",
+        question: "什么是模型校准？准确率高为什么不代表置信度可信？",
+        answer: "若预测置信度约 0.8 的样本中长期约 80% 正确，则模型校准良好。准确率只看 argmax 是否正确，不约束概率大小；模型可能分类很准却系统性过度自信。",
+        sections: [
+          ["指标", ["Reliability diagram：按置信度分桶比较平均置信与真实正确率。", "ECE：各桶校准误差的加权平均，但受分桶影响。", "Brier score/NLL：同时考虑概率质量与正确性。"]],
+          ["校准方法", "Temperature scaling 在验证集学习单个 T 缩放 logits，通常不改变类别排序；Platt scaling、isotonic regression 更灵活但更易过拟合。"],
+          ["分布漂移", "在 IID validation 上校准不保证 OOD 仍可信；上线应分场景、时间和群体持续监控。"]
+        ],
+        traps: ["温度缩放不会改善分类 accuracy，因为 argmax 通常不变。", "ECE 低可能来自粗分桶，需结合图与其他 proper scoring rules。"],
+        followups: ["Brier score 与 NLL 分别惩罚什么？", "为什么深度网络常过度自信？"]
+      },
+      {
+        id: "dl-19", module: "dl", topic: "数据泄漏", level: "必会", origin: "补充",
+        question: "常见的数据泄漏有哪些？训练/验证/测试集应如何切分？",
+        answer: "泄漏包括重复样本跨集合、用全量数据拟合预处理、未来信息进入特征、同一用户/病人跨集合和调参反复窥视测试集。应先按实体、时间或重复簇切分，再只用训练集拟合所有统计。",
+        sections: [
+          ["切分原则", ["IID：随机分层切分。", "时间任务：按时间前后切，模拟未来。", "多记录实体：Group split，确保同一实体只在一个集合。", "近重复：先聚类再按簇切分。"]],
+          ["预处理", "标准化均值方差、特征选择、词表、缺失值填补、数据增强参数都应只从 train 拟合，再应用到 val/test。"],
+          ["交叉验证", "数据少时用 K-fold 估计方差；超参选择结束后仍需要未参与选择的独立 test 做最终一次报告。"]
+        ],
+        traps: ["先对全量数据做 SMOTE/标准化再切分会泄漏。", "公开 benchmark 的训练污染也是泄漏，即使没有显式读取 test 文件。"],
+        followups: ["为什么时间序列不能随机打乱切分？", "nested cross-validation 解决什么？"]
+      },
+      {
+        id: "dl-20", module: "dl", topic: "卷积", level: "必会", origin: "补充",
+        question: "二维卷积的 kernel、stride、padding、dilation、groups 分别控制什么？",
+        answer: "kernel 决定局部窗口，stride 决定移动步长和下采样，padding 控制边界与输出尺寸，dilation 扩大采样间隔和感受野，groups 限制通道连接；depthwise convolution 是 groups 等于输入通道的特例。",
+        formula: "H_out=⌊(H+2P-D(K-1)-1)/S⌋+1",
+        sections: [
+          ["参数共享", "同一卷积核在空间位置共享，带来平移等变性并显著减少参数；卷积参数约 K_hK_wC_inC_out/groups。"],
+          ["常见卷积", ["1×1：混合通道、调整维度。", "Depthwise：每通道独立空间卷积。", "Pointwise：1×1 混合通道，常与 depthwise 组合。", "Transposed convolution：学习上采样，但可能有棋盘格伪影。"]],
+          ["边界", "卷积是平移等变而非天然平移不变；池化、全局聚合与数据增强才进一步获得近似不变性。"]
+        ],
+        traps: ["深度可分离卷积 = depthwise＋pointwise，不只是 depthwise。", "same padding 在 stride>1 或偶数 kernel 时具体左右分配需看框架。"],
+        followups: ["1×1 卷积为什么能改变通道数？", "depthwise separable convolution 节省多少计算？"]
+      },
+      {
+        id: "dl-21", module: "dl", topic: "感受野", level: "高频", origin: "补充",
+        question: "什么是感受野？如何通过堆叠卷积、stride、pooling 和 dilation 扩大？",
+        answer: "某层单个神经元能受输入空间多大区域影响称为理论感受野。堆叠卷积逐层扩大，stride/pooling 增大后续层在原图上的跳距，dilation 在不增加参数和下采样的情况下扩大覆盖。",
+        sections: [
+          ["递推", "设当前 jump=j、感受野 r，kernel k、dilation d、stride s：r_new=r+(k-1)d·j，j_new=j·s。"],
+          ["理论 vs 有效", "理论感受野内的所有像素都可影响输出，但梯度贡献常集中在中心，实际有效感受野更小且近似高斯。"],
+          ["设计", "连续 3×3 比单个大 kernel 增加非线性并常更省参数；dilated conv 可能出现 gridding artifact，需要混合 dilation。"]
+        ],
+        traps: ["扩大理论感受野不保证模型真正利用远处信息。", "stride 扩大感受野的同时会丢失空间分辨率。"],
+        followups: ["两层 3×3 的感受野是多少？", "dilation 为什么不增加 kernel 参数量？"]
+      },
+      {
+        id: "dl-22", module: "dl", topic: "池化", level: "高频", origin: "补充",
+        question: "Max Pooling、Average Pooling、Global Average Pooling 的作用与差别是什么？",
+        answer: "Max pooling 保留局部最强响应，average pooling 聚合平均信息，global average pooling 把每通道整张特征图压成一个值，常替代大规模全连接头以减少参数并增强空间鲁棒性。",
+        sections: [
+          ["下采样", "pooling 降低空间尺寸、计算和对小平移的敏感度；stride convolution 可学习下采样，现代网络也常用它替代固定 pooling。"],
+          ["梯度", "max pooling 梯度只流向 argmax 位置；average pooling 均匀分配。"],
+          ["GAP", "分类网络中每个 channel 可视为一种语义响应，GAP 汇总其全局存在程度，再接线性分类器，减少对固定输入尺寸的依赖。"]
+        ],
+        traps: ["pooling 会损失精细位置信息，检测/分割任务需要跳连、金字塔或上采样恢复。"],
+        followups: ["为什么 max pooling 对噪声尖峰敏感？", "GAP 为什么能减少过拟合？"]
+      },
+      {
+        id: "dl-23", module: "dl", topic: "RNN/LSTM/GRU", level: "必会", origin: "补充",
+        question: "普通 RNN、LSTM、GRU 的核心差别是什么？",
+        answer: "RNN 用单一递归状态，长序列易梯度消失；LSTM 用 cell state 以及输入、遗忘、输出门控制写入、保留和读取；GRU 合并为更新/重置门，参数更少，常在小数据或低延迟场景使用。",
+        sections: [
+          ["LSTM", "cell state 提供近似加法路径，遗忘门控制旧记忆，输入门控制新信息，输出门控制暴露的 hidden state，从而缓解长程梯度问题。"],
+          ["GRU", "没有独立 cell state，把 hidden 的保留与候选更新混合；结构更简单、训练更快，效果与 LSTM 取决于任务。"],
+          ["与 Transformer", "RNN 时间步串行、长程路径长；self-attention 训练可并行且任意位置交互路径短，但长序列稠密 attention 成本高。"]
+        ],
+        traps: ["LSTM 只是缓解而非彻底消除长依赖问题。", "GRU 并不始终比 LSTM 差或好。"],
+        followups: ["遗忘门初始化偏大有什么意义？", "RNN 推理的状态缓存与 Transformer KV cache 有何差别？"]
+      },
+      {
+        id: "dl-24", module: "dl", topic: "残差连接", level: "必会", origin: "已有＋补充",
+        question: "Residual connection 为什么让深层网络更容易训练？",
+        answer: "残差块学习 F(x)，输出 x+F(x)，提供恒等信息和梯度捷径；即使新层暂时无用，只需把 F 学到接近零，不必重新学习恒等映射，因此深度增加不再必然造成优化退化。",
+        formula: "y=x+F(x)\n∂L/∂x=∂L/∂y·(I+∂F/∂x)",
+        sections: [
+          ["优化", "梯度中包含恒等项 I，降低连续 Jacobian 乘积导致的消失风险；网络可视为许多不同深度路径的集成。"],
+          ["维度变化", "若通道/尺寸不同，用 projection shortcut（如 1×1 stride conv）对齐；否则可用纯 identity shortcut。"],
+          ["Transformer", "attention 和 FFN 都包在残差流上，Pre-LN 进一步保证残差主路径不穿过 norm；深模型还会用 residual scaling。"]
+        ],
+        traps: ["残差连接不意味着梯度永不爆炸或消失。", "DenseNet 是特征 concat，ResNet 是相加，信息与参数模式不同。"],
+        followups: ["为什么 zero-init residual branch 有时有利？", "Pre-LN 对残差梯度路径做了什么？"],
+        sources: [["归一化与激活", "ch03_norm_activation.md"]]
+      },
+      {
+        id: "dl-25", module: "dl", topic: "迁移学习", level: "必会", origin: "补充",
+        question: "迁移学习中冻结 backbone、只训 head、逐层解冻和全量 fine-tune 如何选择？",
+        answer: "目标数据少且与预训练域接近时先冻结 backbone 训练 head；数据更多或域差异大时逐层解冻或全量微调；越靠近输入的通用特征通常越可复用，但现代大模型各层功能并非严格分级。",
+        sections: [
+          ["常见流程", ["替换任务 head，冻结 backbone，较大学习率训练 head。", "解冻高层，用较小 LR。", "必要时全量微调，使用 discriminative LR 与 replay/正则。"]],
+          ["BN/Norm", "冻结参数时需决定 BN running stats 是否冻结；视觉域差异大时更新统计可能有益，batch 小时却可能更差。"],
+          ["负迁移", "预训练域与目标冲突、标注偏差或过强微调会让迁移不如从头训练；必须与随机初始化和线性探针基线比较。"]
+        ],
+        traps: ["冻结层不等于节省全部前向激活；若后续可训练层需要其输出，仍要前向。", "不同层学习率不应脱离参数规模与优化器解释。"],
+        followups: ["linear probing 能诊断什么？", "什么是 catastrophic forgetting 与 negative transfer？"]
+      },
+      {
+        id: "dl-26", module: "dl", topic: "知识蒸馏", level: "必会", origin: "已有＋补充",
+        question: "知识蒸馏中的 hard label、soft target、temperature 和 feature distillation 分别是什么？",
+        answer: "hard label 只给正确类别；soft target 使用教师全类别概率传递类别相似性；temperature 调平 logits 暴露低概率信息；feature distillation 让学生中间表示或 attention 对齐教师。",
+        formula: "L=(1-α)CE(y,p_s)+αT²·KL(softmax(z_t/T)||softmax(z_s/T))",
+        sections: [
+          ["Dark knowledge", "教师对错误类别的相对概率包含语义相似性和决策边界信息，比 one-hot 标签更密集。"],
+          ["容量差", "教师太强/分布太尖或学生太小，直接蒸馏仍难；可用 assistant teacher、课程温度、feature projection 或 on-policy 状态。"],
+          ["LLM", "trajectory SFT 是 hard token 蒸馏；full-vocab logit KD 保留整个词表分布；OPD 进一步让状态来自学生。"]
+        ],
+        traps: ["蒸馏不保证学生超过教师；收益依赖教师校准、数据覆盖与学生容量。", "KL 方向和温度会改变 mode-covering/寻峰行为。"],
+        followups: ["为什么 loss 常乘 T²？", "feature distillation 中维度不同如何对齐？"],
+        sources: [["OPD 提纲", "ch13_opd.md"], ["GKD 笔记", "../common_knowledge/23_gkd.md"]]
+      },
+      {
+        id: "dl-27", module: "dl", topic: "对比学习", level: "高频", origin: "补充",
+        question: "对比学习与 InfoNCE 的核心思想是什么？正负样本如何影响表示？",
+        answer: "把同一语义的不同视图拉近，把其他样本推远；InfoNCE 将正样本相似度与一组负样本竞争，学习可区分且具有任务不变性的 embedding。",
+        formula: "L_i=-log exp(sim(q,k⁺)/τ) / Σ_j exp(sim(q,k_j)/τ)",
+        sections: [
+          ["正样本", "来自同一图像增强、同句改写、配对图文或同标签样本；若增强破坏语义，模型会被迫学习错误不变性。"],
+          ["负样本", "更多负样本常提高判别性，但 false negatives 会把语义相同样本错误推远；可用大 batch、memory bank、去偏或无负样本方法。"],
+          ["温度", "τ 小使分布更尖、强调 hard negatives，也可能梯度不稳；相似度常用归一化向量的 cosine。"]
+        ],
+        traps: ["batch 内其他样本不一定都是真负样本。", "embedding norm 未归一化时，点积可通过增大范数取巧。"],
+        followups: ["SimCLR 为什么依赖大 batch？", "Triplet loss 与 InfoNCE 有何差别？"]
+      },
+      {
+        id: "dl-28", module: "dl", topic: "Autoencoder/VAE", level: "高频", origin: "补充",
+        question: "普通 Autoencoder 与 VAE 的目标有什么根本差别？",
+        answer: "AE 学习确定性编码—解码以重构输入，潜空间可能不连续；VAE 学习潜变量概率分布，优化重构项和对先验的 KL，使潜空间可采样、连续，但重构常更平滑。",
+        formula: "ELBO = E_{q(z|x)}[log p(x|z)] - KL(q(z|x)||p(z))\nz=μ+σ⊙ε, ε~N(0,I)",
+        sections: [
+          ["重参数化", "把随机性移到 ε，使 μ、σ 的路径可反向传播；否则直接对随机采样节点难以用普通路径导数。"],
+          ["KL 项", "将每个样本 posterior 拉向共同 prior，支持从 prior 采样；权重过强会 posterior collapse，decoder 忽略 z。"],
+          ["用途", "AE 用于降维、去噪、异常检测；VAE 用于生成、表示学习与潜空间插值。"]
+        ],
+        traps: ["VAE 的重构损失形式由观测分布决定，不总是 MSE。", "KL 越小不一定越好，完全为零可能表示潜变量未被使用。"],
+        followups: ["为什么重参数化技巧可导？", "β-VAE 调大 β 会怎样？"]
+      },
+      {
+        id: "dl-29", module: "dl", topic: "GAN", level: "高频", origin: "补充",
+        question: "GAN 的 min-max 目标、mode collapse 和训练不稳定如何理解？",
+        answer: "Generator 生成样本欺骗 Discriminator，Discriminator 区分真伪；二者动态博弈而非固定损失最小化。mode collapse 是生成器只覆盖少数模式，常由不平衡更新、梯度问题和判别器反馈局部化引起。",
+        formula: "min_G max_D E_x log D(x)+E_z log(1-D(G(z)))",
+        sections: [
+          ["训练", "实践常用 non-saturating generator loss -log D(G(z)) 提供更强早期梯度；交替更新 G/D，需平衡两者能力。"],
+          ["稳定技术", ["WGAN/WGAN-GP 改进距离与 Lipschitz 约束。", "Spectral normalization 限制判别器。", "Feature matching、minibatch discrimination、数据增强。"]],
+          ["评测", "FID 比较特征分布均值/协方差，兼顾质量与多样性但依赖特征网络；人工观察不能发现所有模式缺失。"]
+        ],
+        traps: ["判别器 accuracy 越高不一定越好；过强 D 会让 G 缺少有用梯度。", "GAN loss 数值与生成质量不总单调对应。"],
+        followups: ["Wasserstein 距离为什么比 JS 更适合分布不重叠时？", "如何检测 mode collapse？"]
+      },
+      {
+        id: "dl-30", module: "dl", topic: "Diffusion", level: "高频", origin: "补充",
+        question: "扩散模型的前向加噪、反向去噪和训练目标是什么？",
+        answer: "前向过程逐步向数据加入高斯噪声直到接近标准正态；模型学习在给定时间步预测噪声、score 或干净样本，反向从噪声逐步采样回数据。训练稳定但多步采样较慢。",
+        formula: "x_t=√ᾱ_t x_0+√(1-ᾱ_t)ε\n常见目标：E||ε-ε_θ(x_t,t,c)||²",
+        sections: [
+          ["为什么可直接采任意 t", "高斯前向链有闭式 q(x_t|x_0)，训练时不必真的从 1 迭代到 t，可一次构造带噪 x_t。"],
+          ["条件生成", "把文本/类别条件输入去噪网络；classifier-free guidance 组合有条件与无条件预测，提高条件一致性但过强会损害多样性。"],
+          ["加速", "DDIM、DPM-Solver、蒸馏、consistency/flow 方法减少采样步数；速度—质量取舍取决于噪声调度与 solver。"]
+        ],
+        traps: ["前向加噪是固定过程，通常不训练；训练的是反向模型。", "扩散模型并非完全没有 mode collapse 风险，只是训练目标和覆盖性质通常比 GAN 稳。"],
+        followups: ["score 与噪声预测是什么关系？", "classifier-free guidance 的公式直觉是什么？"]
+      },
+      {
+        id: "dl-31", module: "dl", topic: "模型压缩", level: "必会", origin: "补充",
+        question: "量化、剪枝、蒸馏、低秩分解分别压缩什么？",
+        answer: "量化减少每个数的位宽；剪枝减少有效权重/通道/头；蒸馏把教师函数迁移到小学生；低秩分解用更小矩阵近似大权重。它们可组合，但是否加速取决于硬件和 kernel。",
+        sections: [
+          ["量化", "PTQ 训练后校准，QAT 训练中模拟量化误差；weight-only 主要省权重带宽，W/A/KV 量化进一步省计算与缓存。"],
+          ["剪枝", "非结构化稀疏参数少但需要稀疏 kernel；结构化删除 channel/head/block 更易得到实际速度，但可能掉点更多。"],
+          ["低秩与蒸馏", "SVD/低秩近似减少矩阵乘维度；蒸馏允许学生架构与教师不同，压缩的是函数而非直接权重。"]
+        ],
+        traps: ["参数文件变小不等于端到端延迟下降。", "稀疏率高但模式不规则时，索引开销可能抵消收益。"],
+        followups: ["PTQ 与 QAT 如何选择？", "为什么结构化剪枝更硬件友好？"]
+      },
+      {
+        id: "dl-32", module: "dl", topic: "分布式训练", level: "必会", origin: "已有＋补充",
+        question: "Data Parallel 与 DistributedDataParallel 的梯度同步发生在哪里？为什么不能每卡各自更新？",
+        answer: "每个 rank 持有相同模型并处理不同 mini-batch；反向中 DDP 按 bucket 对梯度做 all-reduce，得到全局平均/总和后各 rank 执行相同 optimizer step。若不同步，模型参数会分叉。",
+        sections: [
+          ["通信重叠", "梯度按反向就绪顺序装入 bucket，早期 bucket 可在后续层仍反向时开始 all-reduce，重叠计算与通信。"],
+          ["数据", "DistributedSampler 保证各 rank 获得不同分片，并在每 epoch 设置随机种子；最后不整除 batch 的处理会影响样本重复/丢弃。"],
+          ["有效 batch", "global batch = micro batch × DP world size × accumulation。loss reduction 与 DDP averaging 要一致，避免多除/少除 world size。"]
+        ],
+        traps: ["DDP 不是把一个样本的单层矩阵切到多卡，那是 tensor parallel。", "各 rank 随机种子完全相同会让数据增强/dropout 产生不期望的相关性。"],
+        followups: ["all-reduce 与 parameter server 有什么差别？", "no_sync 在梯度累积时做什么？"],
+        sources: [["训练系统", "ch05_training_system.md"]]
+      },
+      {
+        id: "dl-33", module: "dl", topic: "NaN/OOM 诊断", level: "必会", origin: "补充",
+        question: "训练出现 NaN、loss spike 或 OOM，应如何系统排查？",
+        answer: "先缩成最小可复现并定位前向、loss、反向还是 optimizer step；检查数据与 mask、学习率、梯度范数、精度和非法算子。OOM 则拆解参数/状态/激活/临时 buffer，按峰值来源选择 batch、checkpointing、FlashAttention、分片或长度优化。",
+        sections: [
+          ["NaN 顺序", ["确认输入/label 范围和无 Inf/NaN。", "开启 anomaly/逐层 hooks 定位第一个非有限张量。", "检查 log(0)、除零、sqrt 负数、全 mask softmax。", "降低 LR、检查 grad norm/loss scaling。", "用 FP32/BF16 对照定位低精度问题。"]],
+          ["OOM 顺序", ["降低 micro-batch 或序列长度。", "activation checkpointing。", "FlashAttention/更高效 kernel。", "ZeRO/FSDP/optimizer offload。", "检查内存泄漏：保存带计算图的 loss/tensor 列表。"]],
+          ["可复现", "保存触发异常的 batch、随机种子、checkpoint 和环境；只看最后报错位置常无法找到更早的首次污染。"]
+        ],
+        traps: ["频繁 empty_cache 不是根治显存不足，还可能降低性能。", "梯度裁剪无法修复前向已产生的 NaN。"],
+        followups: ["为什么把 loss tensor 直接 append 到 Python list 会泄漏计算图？", "如何区分 fragmentation 与真实容量不足？"]
+      },
+      {
+        id: "dl-34", module: "dl", topic: "可复现性", level: "高频", origin: "补充",
+        question: "设置 random seed 为什么仍不能保证深度学习训练完全可复现？",
+        answer: "随机数只是来源之一；GPU 原子操作、并行归约顺序、非确定性 kernel、数据加载顺序、混合精度、硬件/驱动/库版本和分布式调度都会造成浮点差异，并在长训练中被放大。",
+        sections: [
+          ["需要记录", ["代码 commit、配置、数据版本与切分。", "Python/NumPy/框架/CUDA seeds。", "模型/optimizer/scheduler/scaler 状态。", "库、驱动、硬件、world size。", "tokenizer/template 与环境变量。"]],
+          ["确定性模式", "启用 deterministic algorithms、禁用某些 benchmark/autotune 可提高复现，但可能显著降低速度且部分算子无确定性实现。"],
+          ["工程目标", "大规模训练常追求统计可复现而非 bitwise：多次运行指标分布稳定、关键曲线和结论一致；DeepSeek 等同时会加强训练/推理 kernel 的 bitwise alignment 以排查 RL 偏差。"]
+        ],
+        traps: ["只设置 torch.manual_seed 不够。", "完全 bitwise 相同与科学结论可复现是两个不同层级。"],
+        followups: ["为什么浮点加法归约顺序会改变结果？", "checkpoint 恢复要保存哪些 RNG 状态？"]
+      },
+      {
+        id: "sft-01", module: "sft", topic: "目标函数", level: "必会", origin: "已有＋校正",
+        question: "SFT 到底在优化什么？它与预训练的相同点和不同点是什么？",
+        answer: "二者通常都用因果语言模型的 next-token 交叉熵；SFT 把训练分布收窄到指令—回复或多轮对话，并常只在 assistant token 上计算条件负对数似然，使模型学习任务接口、行为和回答分布。",
+        formula: "L_SFT(θ) = - Σ_t m_t · log π_θ(y_t | x, y_<t) / Σ_t m_t\n其中 m_t∈{0,1} 是 loss mask；x 是 system/user 条件，y 是目标回复。",
+        sections: [
+          ["共同点", ["都是 teacher forcing：训练时当前位置看到真实历史 token，而不是模型自己刚生成的 token。", "底层目标仍是最大似然估计，梯度来自 token 级交叉熵。"]],
+          ["不同点", ["预训练数据规模巨大、任务是学习广泛语言分布；SFT 数据更小、更结构化，强调指令遵循、格式、风格、领域技能与安全边界。", "SFT 常用更小学习率、更少 epoch，并通过 loss mask 控制哪些角色产生梯度。"]],
+          ["能力边界", "SFT 既能激发现有能力，也能迁移程序性知识、领域模式乃至部分新事实；但用少量 SFT 做稳定的知识更新并不可靠，容易产生过拟合、冲突与遗忘。"]
+        ],
+        traps: ["“SFT 完全不注入知识”过于绝对。更准确的说法是：它主要改变行为分布，知识注入能力存在但不稳定。", "“预训练无监督、SFT 有监督”是数据来源层面的简写；优化目标本身通常仍是自回归 token 预测。"],
+        followups: ["为什么 SFT 通常比预训练使用更小的学习率？", "如果对所有 token 计算 loss，它还是不是 SFT？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "sft-02", module: "sft", topic: "条件似然", level: "必会", origin: "补充",
+        question: "为什么 response-only loss 可以理解为建模 p(response | prompt)？",
+        answer: "因为 prompt token 被当作已知条件输入，只有 response token 的对数概率进入目标；链式法则把整段回复的条件概率分解成逐 token 概率之和。",
+        formula: "log p(y | x) = Σ_t log p(y_t | x, y_<t)\nlabels_t = input_ids_t（目标位置）；被忽略位置通常设为 -100。",
+        sections: [
+          ["直觉", "我们希望模型在给定 system 与 user 消息后生成正确 assistant 回复，而不是花同样权重去复原用户到底说了什么。"],
+          ["实现", ["先用 chat template 得到一条 token 序列。", "labels 通常复制 input_ids，再把 system/user/padding 等位置替换为 ignore index。", "交叉熵内部会做一位 shift：位置 t 的 logits 预测位置 t+1 的 label。"]],
+          ["归一化", "应关注按有效目标 token 归一化还是按样本归一化。前者让长答案贡献更多梯度；后者可降低长度偏置，但实现需要显式 per-example reduction。"]
+        ],
+        traps: ["忘记 shift 会造成标签错位。", "把 padding id 当普通 label 会让模型被训练去预测大量 padding。"],
+        followups: ["长答案在 token-average loss 中为什么权重更大？", "如何做每样本等权而不是每 token 等权？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-03", module: "sft", topic: "Loss Mask", level: "必会", origin: "已有＋校正",
+        question: "为什么通常 mask 掉 prompt？哪些情况下可能保留 prompt loss？",
+        answer: "mask prompt 让目标与条件生成一致，减少无关梯度并避免不同 prompt 长度支配训练；但 full-sequence instruction tuning、continued pretraining 或希望联合保持语言建模能力时，也可能对 prompt 计算部分或全部 loss。",
+        sections: [
+          ["常见理由", ["system/user 是条件，不是部署时由模型生成的目标。", "长 prompt 若也计 loss，会稀释稀少的 assistant 梯度。", "用户文本质量与分布常不可控，不一定值得模型模仿。"]],
+          ["并非定律", ["预训练式指令混合可对整段文本训练。", "某些数据只有连续文本边界，没有稳定的角色 mask。", "可对 prompt 使用较小权重，而不是二元全开/全关。"]],
+          ["工程检查", "抽样打印 input_ids、token 文本与 labels；确认第一个 assistant token、EOT/EOS、padding 的 mask 均符合预期。"]
+        ],
+        traps: ["prompt loss 的主要风险是目标错配和梯度预算浪费；不能简单断言它必然导致推理时复述 prompt。", "只看总 loss 无法发现角色边界错一位。"],
+        followups: ["system prompt 是否应该计算 loss？", "assistant 的起始标记和结束标记应不应该计算 loss？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-04", module: "sft", topic: "多轮对话", level: "必会", origin: "补充",
+        question: "多轮 SFT 应该只训练最后一轮 assistant，还是训练所有 assistant 轮次？",
+        answer: "两种都可：训练所有 assistant 轮次提高 token 利用率并学习多轮行为；只训练最后一轮能避免早期回复不再符合当前目标或降低同一对话内部的相关性偏置。选择必须与数据质量和任务定义一致。",
+        sections: [
+          ["全部 assistant 监督", ["mask system/user/tool，只保留每一轮 assistant 的正文与结束标记。", "适合每轮回复都经过质量控制的数据。", "同一对话贡献多个目标，效率高。"]],
+          ["只监督最后一轮", ["适合前文是上下文材料、只有最后答案为 gold 的数据。", "避免模型学习中间的草稿、失败尝试或被编辑掉的回复。"]],
+          ["工具轨迹", "工具调用本身通常属于 assistant action，应按任务决定是否监督；工具返回属于环境 observation，通常只作为条件，不计算生成 loss。"]
+        ],
+        traps: ["仅按字符串搜索 role 标签生成 mask，容易被用户正文里的相同字符串干扰。应依赖 tokenizer/chat-template 返回的边界或结构化消息。"],
+        followups: ["工具调用 JSON/XML 的 token 是否参与 loss？", "如果 assistant 消息中含隐藏 reasoning 与可见 answer，如何分配 mask？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"]]
+      },
+      {
+        id: "sft-05", module: "sft", topic: "Chat Template", level: "必会", origin: "已有＋补充",
+        question: "Chat template 为什么是 SFT 中最容易被低估的模型接口？",
+        answer: "它定义角色、边界、控制 token、生成起点与停止协议；训练和推理模板不一致会造成真实的分布偏移，即使权重与数据都正确也会出现不停止、角色混淆或工具调用失败。",
+        sections: [
+          ["模板负责什么", ["system/user/assistant/tool 的序列化顺序。", "BOS、角色 token、EOT/EOS、换行和 generation prompt。", "多轮对话与工具 schema 的插入位置。"]],
+          ["验证方法", ["对同一 messages 分别打印训练侧与推理侧 token id，要求生成前缀完全一致。", "检查 add_generation_prompt 的差异：训练样本已有 assistant 内容，推理时通常只加 assistant 起始前缀。", "用单条最小样本确认模型能在正确 EOT/EOS 停止。"]],
+          ["版本管理", "模板、tokenizer 与 checkpoint 应作为同一版本化工件。修改特殊 token 后需要确认 embedding resize、token id 稳定性与服务端 stop 配置。"]
+        ],
+        traps: ["把普通文本 `<|assistant|>` 当作真正的单一 special token，可能被 tokenizer 切成多个普通 token。", "重复添加 BOS 或同时由模板和 tokenizer 添加特殊 token。"],
+        followups: ["训练时为什么通常不使用 add_generation_prompt？", "服务端 stop string 与 stop token 有什么差别？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["V4 论文", "../industry_reports/deepseek/deepseek_v4.pdf#page=30"]]
+      },
+      {
+        id: "sft-06", module: "sft", topic: "终止协议", level: "必会", origin: "补充",
+        question: "EOS、EOT、PAD、BOS 分别是什么？混用会造成什么问题？",
+        answer: "BOS 标识序列开始，EOT 标识一条消息/一轮结束，EOS 标识整个生成结束，PAD 只用于批处理补齐；它们可共享 id 但语义必须清楚，mask 与生成停止规则也要一致。",
+        sections: [
+          ["训练侧", ["assistant 的 EOT/EOS 往往应作为目标监督，否则模型学不会主动停止。", "PAD 必须从 loss 中排除；若 PAD=EOS，不能仅按 token id 全局 mask，否则会把真实 EOS 一起屏蔽。"]],
+          ["推理侧", ["generation 配置需包含正确 eos_token_id，必要时允许多个终止 id。", "只依赖字符串 stop 可能截断 Unicode 或留下隐藏控制 token。"]],
+          ["常见症状", "无限续写、吞掉下一轮角色、输出空答案、生成大量 padding、模板中出现双 BOS，很多时候首先应排查终止协议而不是改学习率。"]
+        ],
+        traps: ["PAD=EOS 是常见配置，不代表所有 EOS 都应 mask。应根据 attention/padding 位置而非 id 一刀切。"],
+        followups: ["为什么监督 EOS 会影响回答长度？", "多 EOS 模型在生成框架里如何设置停止条件？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-07", module: "sft", topic: "Packing", level: "必会", origin: "已有＋校正",
+        question: "SFT packing 提升了什么效率？是否一定要做 block-diagonal attention？",
+        answer: "packing 把多个短样本填进同一固定长度序列，减少 padding 和空算；严格样本独立需要 block-diagonal attention，但允许跨样本因果可见、用 EOS 分隔的普通 packing 也常见，二者是质量—实现复杂度的取舍。",
+        sections: [
+          ["三层边界", ["loss 边界：每个样本只在其目标 token 上计算 loss。", "attention 边界：是否允许后一个样本看到前一个样本。", "position 边界：position id 是连续递增还是每个样本重置。"]],
+          ["严格隔离", "使用 block-diagonal causal mask，配合 position reset，数学上等价于把样本分别前向；FlashAttention 的 varlen/cumulative sequence lengths 可高效实现。"],
+          ["普通拼接", "样本间放 EOS/EOD，后样本可能看到前样本，但模型常能学会边界。实现简单、kernel 支持好；代价是潜在跨样本污染和与单样本推理不完全一致。"]
+        ],
+        traps: ["“packing 必须隔离 attention”不是普遍事实；需要说明所用框架的具体语义。", "只拼 input_ids 而忘记同步拼 labels、attention mask 与 position ids。"],
+        followups: ["为什么 block-diagonal attention 在朴素 dense mask 下可能反而慢？", "sequence packing 和 batch padding 的吞吐差异从哪里来？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"]]
+      },
+      {
+        id: "sft-08", module: "sft", topic: "截断", level: "高频", origin: "补充",
+        question: "样本超过最大长度时，为什么不能简单从右侧截断？",
+        answer: "右截断可能恰好删掉最终答案与终止 token，使样本只剩 prompt 或残缺回复；应按任务设计保留策略，并记录 prompt/response 截断率与有效监督 token 数。",
+        sections: [
+          ["常用策略", ["保尾：长文问答优先保留问题与最终答案，裁剪中间文档。", "保头＋保尾：保留 system/任务定义和结论，中间按预算裁剪。", "滑窗或分块：适合长文抽取与持续预训练，但要避免答案落在不可见窗口。", "丢弃：极少数异常超长样本可能比错误截断更安全。"]],
+          ["监控指标", ["被截断样本比例。", "被截断 response 的比例。", "每样本有效 label token 分布。", "EOS/EOT 保留率。"]],
+          ["长度课程", "若模型需要长输出能力，应有真实长样本和相应位置长度训练；单纯提高 max_length 不会自动获得长程能力。"]
+        ],
+        traps: ["tokenizer 的 truncation_side 与 padding_side 是不同配置。", "截断后 labels 可能全部为 -100，若不丢弃会产生无效 batch 或 NaN。"],
+        followups: ["长 prompt 短 answer 与短 prompt 长 answer 应如何分配预算？", "如何检测一个 batch 中是否存在零有效 label？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-09", module: "sft", topic: "Data Collator", level: "高频", origin: "补充",
+        question: "从 messages 到一个可训练 batch，data collator 应完成哪些工作？",
+        answer: "应用模板、tokenize、构造角色级 labels、截断/packing、padding，并产出 input_ids、attention_mask、labels，必要时还要 position_ids、sequence boundaries 与多模态字段。",
+        sections: [
+          ["最小流水线", ["验证结构化 messages 合法、角色顺序正确。", "模板化并定位 assistant span。", "tokenize 后复制 input_ids 为 labels，再把非目标位置设为 -100。", "按 batch 最长或固定长度 padding；labels 的 pad 位置保持 -100。", "抽样反解 token 与 labels 做人工 QA。"]],
+          ["分布式注意事项", "不同 rank 的有效 token 数差异会改变吞吐；动态 batching、按长度分桶和 token-based batch 可减少长尾拖慢。"],
+          ["验收断言", ["至少一个有效 label。", "目标 span 不越界。", "角色边界数量符合预期。", "attention_mask 与 input_ids 等长。", "特殊 token id 均在词表范围内。"]]
+        ],
+        traps: ["模板先字符串化再用脆弱的字符 offset 映射 token，遇到 Unicode/规范化会错位。", "在 collator 中重复添加 special tokens。"],
+        followups: ["为什么 labels 常设为 -100 而不是 pad_token_id？", "动态 batching 如何定义每批 token 上限？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-10", module: "sft", topic: "数据质量", level: "必会", origin: "已有＋补充",
+        question: "什么叫高质量 SFT 数据？如何把“质量”拆成可操作指标？",
+        answer: "高质量不只是答案正确，还包括任务真实、指令清晰、约束满足、推理与结论一致、格式可学、风格合适、难度有增益、无泄漏且覆盖目标分布。",
+        sections: [
+          ["质量维度", ["正确性：事实、计算、代码测试与引用可验证。", "相关性：回答解决用户问题，不堆无关内容。", "指令遵循：长度、格式、语言、禁止项等约束全部满足。", "可学习性：无互相冲突的模板、标签和风格。", "信息增益：不是模型已能稳定解决的超简单样本。", "安全与隐私：无敏感信息、版权高风险与恶意后门。"]],
+          ["评审方法", ["规则验证器处理代码、数学和结构格式。", "强模型按 rubric 打分并给出理由，但需校准模型偏好。", "人工对边界样本与高价值领域抽检。", "训练前后做小规模 ablation，质量最终由泛化收益验证。"]],
+          ["数据单位", "样本数容易误导，应同时报告 token 数、有效 assistant token 数、领域覆盖、长度和难度分布。"]
+        ],
+        traps: ["语言流畅不等于事实正确。", "同一个教师生成的大量同质样本会放大风格偏差。"],
+        followups: ["如何检测模型生成数据的模板化？", "为什么训练 loss 低不能证明数据质量高？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["DeepSeek‑V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"]]
+      },
+      {
+        id: "sft-11", module: "sft", topic: "规模规律", level: "高频", origin: "已有＋校正",
+        question: "SFT 数据是质量大于数量吗？LIMA 与 DeepSeek‑V2 给出了什么不同启示？",
+        answer: "高质量是前提，但数量不能脱离任务覆盖讨论：少量精选数据可快速建立回答风格，DeepSeek‑V2 则观察到少于约 10K 会明显损害 IFEval，说明复杂指令覆盖仍需要规模。",
+        sections: [
+          ["如何统一两者", ["LIMA 说明对齐表面格式与通用对话可具有较高样本效率。", "DeepSeek‑V2 说明真实 instruction-following 的约束组合和长尾任务需要足够覆盖。", "随着 base 模型变强，建立基本对话行为所需样本可减少，但领域广度、安全边界和工具协议不会自动消失。"]],
+          ["正确决策方式", "画数据量 scaling curve：固定质量与配比，逐步增加 token，观察目标能力、保留能力和错误类型，而不是引用一个固定的‘最佳样本数’。"],
+          ["边际收益", "新增样本若只是近重复，token 增加但有效信息不增加；相反，高难度、失败驱动的数据可能数量少却贡献大。"]
+        ],
+        traps: ["“1000 条一定等于数万条”是对 LIMA 的过度泛化。", "规模比较必须控制 base 模型、任务、模板、token 数和质量。"],
+        followups: ["如何设计数据量消融实验？", "为什么 instruction following 比聊天风格更依赖覆盖度？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["DeepSeek‑V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"]]
+      },
+      {
+        id: "sft-12", module: "sft", topic: "数据配比", level: "必会", origin: "补充",
+        question: "多领域 SFT 数据应该按原始数量混合，还是人为重采样？",
+        answer: "通常需要人为配比或温度采样，因为原始数量反映采集便利而非产品价值；配比要同时考虑目标流量、能力短板、样本质量、长度成本和遗忘风险。",
+        sections: [
+          ["常见方法", ["固定比例：直观、易复现。", "温度采样：把领域概率 p_i 调整为 p_i^α 并归一化，α<1 时抬升小领域。", "动态课程：前期广覆盖，后期增加高质量目标领域或失败样本。", "loss reweight：不改变抽样，只改变领域/样本权重。"]],
+          ["长度陷阱", "若按样本比例混合，长 CoT 领域会贡献更多 token 与梯度；必须同时看 sample share 和 effective label-token share。"],
+          ["监控", "每个领域分别报告训练 loss、验证指标、输出长度和对其他领域的干扰，寻找 Pareto 前沿而不是只看总平均分。"]
+        ],
+        traps: ["过度上采样小领域会导致重复曝光和过拟合。", "把安全数据比例拉高可能造成过度拒答，需要联合 benign prompts 评测。"],
+        followups: ["温度采样 α 变小会发生什么？", "如何避免长 CoT 数据在 token 级目标中占据过大权重？"],
+        sources: [["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "sft-13", module: "sft", topic: "合成数据", level: "高频", origin: "已有＋补充",
+        question: "Self‑Instruct/教师模型合成 SFT 数据的完整闭环是什么？",
+        answer: "从真实种子与能力缺口生成任务和候选答案，经规则、模型与人工多层过滤、去重和难度筛选，再训练学生并从其失败中生成下一轮课程；核心不是‘生成更多’，而是‘产生可验证的新信息’。",
+        sections: [
+          ["闭环", ["定义能力 taxonomy 与真实使用分布。", "采样种子，生成指令、答案、解释或工具轨迹。", "用执行器/答案校验器/rubric judge 过滤。", "语义去重、污染检测、风格多样化。", "训练并收集学生失败案例。", "针对失败定向再生成，形成数据飞轮。"]],
+          ["教师偏差", "教师的口头禅、拒答边界、冗长和事实错误会被学生复制；多教师、风格约束、人工 anchor 与真实数据混合可降低单一教师偏差。"],
+          ["蒸馏上限", "学生只能从教师在给定状态上提供的分布学习；若教师在学生偏离后的状态不可靠，离线 SFT 暴露偏差会更明显，这正是 on-policy distillation 的动机。"]
+        ],
+        traps: ["用同一个模型既生成又无校准地评审，容易产生自洽但错误的数据。", "只保留教师最确定的简单样本会造成难度坍缩。"],
+        followups: ["如何判断一条合成数据对当前学生是否有信息增益？", "多教师数据出现冲突时如何处理？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"]]
+      },
+      {
+        id: "sft-14", module: "sft", topic: "去重与污染", level: "高频", origin: "补充",
+        question: "SFT 数据为什么也必须去重、去污染？应该在哪些粒度处理？",
+        answer: "重复会放大特定答案和风格、降低有效数据量；评测污染会制造虚假能力。应同时做精确去重、近重复/语义去重、模板去重以及与验证集/基准题的交叉污染检测。",
+        sections: [
+          ["粒度", ["文档/对话级：完全重复、字段顺序变化。", "prompt 级：同题不同答案，可能造成冲突。", "response 级：大量公共模板或免责声明。", "n-gram/MinHash：发现轻微改写。", "embedding 聚类：发现语义近重复。"]],
+          ["污染策略", ["训练集与 dev/test 按题干、答案、代码 AST、语义相似度比较。", "公开 benchmark 的改写也要视为潜在污染。", "时间切分可降低真实产品数据泄漏。"]],
+          ["不要误删", "数学同模板不同数值、代码同接口不同约束可能是真正的课程变化；去重阈值应按领域校准并抽检边界簇。"]
+        ],
+        traps: ["只做字符串 exact match 远远不够。", "先随机切分再去重会让近重复样本跨 train/test 泄漏。应先聚类再按簇切分。"],
+        followups: ["MinHash 适合发现什么重复？", "如何处理同一 prompt 有多个都正确但风格不同的答案？"],
+        sources: [["预训练与评估", "ch06_pretrain_eval.md"]]
+      },
+      {
+        id: "sft-15", module: "sft", topic: "拒绝采样", level: "高频", origin: "已有＋补充",
+        question: "拒绝采样如何把“题目＋奖励”转化成 SFT 数据？",
+        answer: "让 expert/policy 对同一题采样多条轨迹，用规则或奖励模型筛掉错误、低质与过长轨迹，保留问题—正确回答对；它把稀疏奖励监督转成可直接 teacher-force 的示范数据。",
+        sections: [
+          ["典型流程", ["选择有可验证奖励的 prompts。", "高温或多样化采样多个候选。", "先按正确性过滤，再按格式、长度、可读性和多样性筛选。", "控制每题保留数量，避免简单题产生过多样本。", "将干净轨迹混入 SFT，并保留独立验证集。"]],
+          ["DeepSeek 关联", "V3 使用领域 expert/R1 生成推理轨迹并拒绝采样，R1 在推理 RL 后收集约 60 万推理样本，再加约 20 万非推理样本做下一轮 SFT。"],
+          ["偏差", "只保留成功轨迹会丢失失败信息并产生 selection bias；SFT 适合模仿成功行为，而失败对比更适合偏好学习或 RL。"]
+        ],
+        traps: ["奖励高不等于答案适合 SFT：可能存在 reward hacking、超长自验证或不可读格式。"],
+        followups: ["为什么 expert model 不是多余的中间步骤？", "每题保留 top-1 与保留多个正确轨迹有什么取舍？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"], ["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"]]
+      },
+      {
+        id: "sft-16", module: "sft", topic: "On/Off-policy", level: "进阶", origin: "补充",
+        question: "SFT 数据的 on-policy / off-policy 指什么？为什么会影响学习？",
+        answer: "off-policy SFT 在教师或人类轨迹上训练；on-policy 数据来自当前学生自己的生成状态，再由教师修正或打分。后者更贴近部署时学生会访问的状态，可缓解暴露偏差和过大的策略迁移。",
+        sections: [
+          ["状态分布", "关键不是答案作者的名字，而是轨迹前缀由谁生成。教师轨迹上的 token 使学生只见‘正确历史’，学生轨迹则包含其真实偏离后的状态。"],
+          ["迭代式 SFT", "学生 rollout → 过滤/教师修正 → 对这些近 on-policy 样本 SFT → 再 rollout。它比一次性静态蒸馏更贴近学生分布，但严格意义上在参数更新后仍会变旧。"],
+          ["与 OPD", "OPD 更直接：学生在线采样，教师对学生访问到的每个 token 状态提供完整分布监督，不必只形成单一 hard target。"]
+        ],
+        traps: ["教师给学生样本打分不自动等于 on-policy；必须确认采样轨迹来自哪个策略版本。", "on-policy 数据也可能质量低，需要教师或规则信号。"],
+        followups: ["行为克隆的 covariate shift 是什么？", "为什么参数更新多步后，原 on-policy 数据会逐渐变成 off-policy？"],
+        sources: [["OPD 笔记", "../common_knowledge/21_on_policy_distillation.md"], ["GKD 笔记", "../common_knowledge/23_gkd.md"]]
+      },
+      {
+        id: "sft-17", module: "sft", topic: "课程学习", level: "进阶", origin: "补充",
+        question: "SFT 是否需要 curriculum learning？难度应该如何安排？",
+        answer: "课程不是必须按‘简单到困难’机械排序，而是让模型在每阶段看到可学习且有增益的分布；可按格式冷启动、基础技能、复杂组合、真实失败与长上下文逐步扩展。",
+        sections: [
+          ["适用场景", ["新工具协议：先短而正确的单工具轨迹，再多工具与异常恢复。", "推理：先建立输出格式，再加入需要探索的高难题。", "领域适配：先术语与基础任务，再复杂综合案例。"]],
+          ["难度估计", ["base/student 的 pass@k 或 loss。", "验证器判定的成功率。", "教师—学生概率差异。", "人类标注的步骤数、工具数与上下文长度。"]],
+          ["反课程风险", "只在最后阶段看难题可能遗忘简单任务；应保留 replay，并让每阶段的验证集覆盖全部关键能力。"]
+        ],
+        traps: ["过简单数据占比过高会降低梯度信息并强化模板。", "难度不能只用答案长度代替，长答案可能只是啰嗦。"],
+        followups: ["如何用 pass@k 设计可学习区间？", "为什么 RL 冷启动只要求目标行为概率非零？"],
+        sources: [["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"]]
+      },
+      {
+        id: "sft-18", module: "sft", topic: "全参/PEFT", level: "必会", origin: "已有＋校正",
+        question: "全参数 SFT、LoRA 与 Adapter 应该如何选择？",
+        answer: "全参 SFT 容量最大且适合大规模高质量通用对齐；LoRA/Adapter 显著降低可训练参数和优化器显存，适合资源受限、多租户或快速领域适配，但容量、部署合并与多 adapter 管理需权衡。",
+        sections: [
+          ["全参 SFT", ["优点：所有层可协同适配，性能上限通常更高。", "代价：梯度和优化器状态昂贵，灾难性遗忘与训练不稳定需要更严格控制。"]],
+          ["LoRA", ["冻结 W，只训练低秩 ΔW；优化器状态只覆盖小矩阵。", "可合并进权重，也可运行时挂载多个 adapter。", "高秩、广 target modules 时容量接近全参但节省会缩小。"]],
+          ["选择依据", "看数据规模、领域偏移强度、硬件预算、是否需要多个客户版本、部署能否接受 adapter 路由，以及最终是否还要做 RL。"]
+        ],
+        traps: ["LoRA 不天然保证更少遗忘：adapter 仍可把输出分布推得很远。", "只比较可训练参数不够，激活显存通常仍由全模型前向决定。"],
+        followups: ["为什么 LoRA 省优化器显存却不等比例省激活显存？", "何时需要训练 embedding/lm_head？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-19", module: "sft", topic: "LoRA 原理", level: "必会", origin: "已有＋补充",
+        question: "请完整解释 LoRA 的公式、初始化、缩放和 target modules。",
+        answer: "LoRA 用 ΔW=(α/r)BA 近似权重更新，冻结 W；常让一个低秩矩阵随机初始化、另一个为零，使训练开始时 ΔW=0。r 决定容量，α/r 决定更新尺度，target modules 决定可适配的子空间。",
+        formula: "h = W x + (α/r) B A x\nA∈R^{r×d_in}, B∈R^{d_out×r}, r ≪ min(d_in,d_out)",
+        sections: [
+          ["超参数", ["rank r：越大表达容量越强、显存与通信越高。", "alpha：缩放 LoRA 分支，需结合 r 与学习率解释。", "dropout：只作用 LoRA 输入分支，小数据时可轻度正则。"]],
+          ["模块选择", ["只做 q/v 投影成本低但容量有限。", "q/k/v/o + FFN gate/up/down 更全面。", "领域词汇或新 special token 可能需要训练 embedding 与 lm_head。"]],
+          ["合并", "推理前可把 ΔW 加回 W，消除额外矩阵乘；量化基座合并时需注意反量化/再量化误差。"]
+        ],
+        traps: ["把 A、B 都初始化为零会导致两者初始梯度都无法有效打破对称。", "不同库对 A/B 形状命名可能相反，面试应讲数学含义而非死记字母。"],
+        followups: ["rank 加倍但 alpha 不变会怎样？", "为什么 LoRA 可看作限制权重更新的内在秩？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-20", module: "sft", topic: "QLoRA", level: "高频", origin: "已有＋补充",
+        question: "QLoRA 为什么能省显存？NF4、double quantization 与 paged optimizer 各做什么？",
+        answer: "QLoRA 把冻结基座以 4-bit 存储并在计算时反量化到 BF16/FP16，只训练 LoRA；NF4适配近似正态权重，double quantization 再压缩量化尺度，paged optimizer 用统一内存缓解长序列显存峰值。",
+        sections: [
+          ["关键点", ["基座 4-bit 是存储格式，不代表矩阵乘的所有累加都在 4-bit。", "LoRA 参数、梯度和优化器状态通常保持较高精度。", "量化基座冻结，因此不需要为其保存梯度与优化器状态。"]],
+          ["NF4", "NormalFloat4 让有限的 4-bit code points 更适配零均值、近似正态的预训练权重分布，比均匀 INT4 更有效。"],
+          ["代价", "反量化 kernel、量化误差、吞吐与硬件支持会影响实际收益；QLoRA 省权重显存，但激活与 KV/attention 仍可能主导长序列训练。"]
+        ],
+        traps: ["“单卡一定能微调 70B”依赖卡型、序列长度、batch、checkpointing 和实现，不能脱离配置承诺。"],
+        followups: ["为什么训练基座权重时不能直接沿用同样的 4-bit 冻结方案？", "QLoRA 的主要显存仍可能花在哪里？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-21", module: "sft", topic: "训练超参", level: "必会", origin: "已有＋补充",
+        question: "SFT 的学习率、epoch、batch size 应如何确定，而不是死记 1e‑5？",
+        answer: "它们共同决定优化强度：根据模型规模、全参/LoRA、有效 token 数、数据重复度与领域偏移做小规模 sweep，以目标能力提升、保留能力、KL/输出分布变化和验证 loss 选早停点。",
+        sections: [
+          ["经验起点", ["全参 SFT 常比预训练峰值学习率小 1–2 个数量级；大模型通常更保守。", "LoRA 可使用更高学习率，但取决于 rank、alpha 和 target modules。", "高质量大数据可能 1 epoch 已足够；小而多样的数据可多轮，但重复曝光风险更大。"]],
+          ["batch 的含义", "应报告 global batch 的样本数和有效目标 token 数。固定样本 batch 时，长度变化会使每步 token 数和梯度权重剧烈变化。"],
+          ["选择信号", ["held-out response loss。", "指令遵循与领域指标。", "基座能力回归集。", "重复率、长度、拒答率和生成熵。"]]
+        ],
+        traps: ["训练 loss 持续下降不意味着应该继续训。", "直接照搬另一个模型的 LoRA 学习率到全参微调。"],
+        followups: ["为什么大模型可能用更少 epoch？", "同样 global batch 下，梯度累积与数据并行是否完全等价？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "sft-22", module: "sft", topic: "有效 Batch", level: "高频", origin: "补充",
+        question: "global batch、micro batch、gradient accumulation 与 token batch 如何换算？",
+        answer: "global sample batch 通常等于每卡 micro batch × 数据并行卡数 × 累积步数；但变长序列下更有意义的是每次 optimizer step 的有效输入/目标 token 数。",
+        formula: "B_global(samples) = B_micro × N_DP × N_accum\nT_effective = Σ_{本次更新全部样本} 有效 label tokens",
+        sections: [
+          ["梯度累积", "多次 forward/backward 后再 optimizer step，主要为显存受限时模拟大 batch；若 loss reduction 与 token 数处理不当，各 micro-batch 不等长时会产生错误加权。"],
+          ["token-based batching", "设每批最大 token budget，动态装入不同数量样本，可提升显存利用率并稳定每步计算量。"],
+          ["分布式", "DP rank 间样本长度差异会产生 straggler；按长度分桶、动态 packing 和负载感知采样可缓解。"]
+        ],
+        traps: ["把每个 micro-batch 的平均 loss 再等权平均，会让短 batch 与长 batch 权重相同；若目标是 token 等权，应按有效 token 数汇总。"],
+        followups: ["增大 batch 为什么常需要调整学习率？", "sequence parallel 与 data parallel 对 global batch 的贡献一样吗？"],
+        sources: [["训练系统", "ch05_training_system.md"]]
+      },
+      {
+        id: "sft-23", module: "sft", topic: "优化器", level: "高频", origin: "已有＋补充",
+        question: "SFT 为什么常用 AdamW、warmup 和 gradient clipping？weight decay 应作用于哪些参数？",
+        answer: "AdamW 用自适应矩处理不同参数尺度并解耦权重衰减；warmup 避免初期统计不稳时大步更新；gradient clipping 限制异常 batch 的全局梯度。bias、norm scale 和部分 embedding 通常不做 decay。",
+        sections: [
+          ["AdamW", "一阶矩提供动量，二阶矩做逐参数尺度归一；decoupled weight decay 直接收缩权重，不让正则梯度再被自适应缩放。"],
+          ["SFT 特性", "高质量小数据使单个异常样本影响更大，短 warmup 和较小峰值 LR 常更稳。若训练步数很少，warmup 比例过大又会导致大部分训练处于升温。"],
+          ["参数组", ["矩阵权重可 decay。", "RMSNorm/LayerNorm 的 scale、bias 通常 no_decay。", "LoRA 参数是否 decay 需实验，许多配方设 0 或较小值。"]]
+        ],
+        traps: ["clip 只能限制梯度范数，不能修复 NaN、错误 mask 或数据异常。", "只报告 clip threshold 不报告裁剪触发率，难以判断训练是否长期处于被裁剪状态。"],
+        followups: ["为什么短训练中 cosine decay 可能不如 constant/linear？", "如何监控 gradient norm 与 update norm？"],
+        sources: [["训练系统", "ch05_training_system.md"], ["AdamW 笔记", "../common_knowledge/3_adamw.md"]]
+      },
+      {
+        id: "sft-24", module: "sft", topic: "显存与并行", level: "高频", origin: "已有＋补充",
+        question: "SFT 显存由哪些部分构成？gradient checkpointing、ZeRO/FSDP 分别省什么？",
+        answer: "显存主要来自参数、梯度、优化器状态、激活和临时 buffer；checkpointing 通过反向重算省激活，ZeRO/FSDP 在数据并行 rank 间分片优化器、梯度乃至参数，两者解决的对象不同。",
+        sections: [
+          ["显存账本", ["BF16 参数约 2 bytes/param；若有 FP32 master 则另加。", "Adam 一阶/二阶矩通常各 FP32，优化器状态可远大于权重。", "激活随 batch、序列长度、层数增长，长序列时可能占主导。", "attention 临时矩阵可由 FlashAttention 显著降低。"]],
+          ["技术定位", ["Gradient checkpointing：少存中间激活，反向时重算，省显存但增加计算。", "ZeRO‑1/2/3：依次分片 optimizer、gradient、parameter。", "FSDP：参数全分片并按层 gather/reshard，思想接近 ZeRO‑3。"]],
+          ["组合", "LoRA/QLoRA 可与 checkpointing、FlashAttention 和 ZeRO/FSDP 组合，但通信、小 tensor 和量化 kernel 可能使理论节省不能转化为吞吐。"]
+        ],
+        traps: ["activation checkpointing 不会减少优化器状态。", "ZeRO‑3 省显存最多但参数频繁 all-gather，未必吞吐最高。"],
+        followups: ["为什么长序列时激活显存比参数显存更关键？", "LoRA 场景是否一定需要 ZeRO‑3？"],
+        sources: [["训练系统", "ch05_training_system.md"], ["FlashAttention", "../common_knowledge/4_flash_attention.md"]]
+      },
+      {
+        id: "sft-25", module: "sft", topic: "灾难性遗忘", level: "必会", origin: "已有＋校正",
+        question: "SFT 的灾难性遗忘是什么？如何区分真遗忘与行为入口变化？",
+        answer: "目标领域更新使其他能力下降称为遗忘；但若换回 base 模板、few-shot 或提示后能力恢复，可能是任务识别/输出策略改变的 spurious forgetting，而非知识表征被彻底抹除。",
+        sections: [
+          ["诊断", ["用相同 tokenizer/template 做 base 与 SFT checkpoint 的成对评测。", "同时测试 zero-shot、few-shot、不同格式与 log-likelihood。", "检查领域外 loss、生成正确率、校准和表示/参数漂移。"]],
+          ["缓解", ["降低学习率、epoch 和总 update norm。", "混合高质量通用 replay/预训练数据。", "保持数据领域与语言多样性。", "使用参数高效微调、冻结部分层或正则到参考模型。", "早停并按能力向量而非单指标选 checkpoint。"]],
+          ["on-policy 视角", "外部示范与学生当前策略差异越大，SFT 更新可能越激进；近 on-policy 数据通常更保守，但这不是无条件保证。"]
+        ],
+        traps: ["固定说‘混入 5–10% 预训练数据’不是定律，比例取决于领域偏移与目标能力。", "LoRA 也可能显著改变输出行为，不能自动视为无遗忘。"],
+        followups: ["如何用 KL 或 checkpoint 插值衡量策略漂移？", "为什么多阶段后训练更容易发生后阶段覆盖前阶段能力？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"]]
+      },
+      {
+        id: "sft-26", module: "sft", topic: "虚假遗忘", level: "进阶", origin: "补充",
+        question: "什么是 spurious forgetting？如何证明能力仍在？",
+        answer: "模型在旧任务上表现下降，但通过少量提示、上下文示例、模板恢复或轻量再适配即可恢复，说明底层能力可能仍存在，只是当前策略不再访问正确行为模式。",
+        sections: [
+          ["证据", ["few-shot 能显著恢复而非仅小幅改善。", "选择题 log-prob 仍偏向正确答案，但自由生成格式错误。", "线性探针或中间表示仍编码相关信息。", "极少量反向微调即可恢复旧能力。"]],
+          ["原因", ["chat template/系统提示改变任务识别。", "输出风格或拒答策略压过了知识。", "SFT 强化了另一个高概率 mode，旧 mode 仍在但变得难以采样。"]],
+          ["实践意义", "先修接口与提示，再决定是否需要大规模 replay；否则可能为一个格式问题付出不必要的训练成本。"]
+        ],
+        traps: ["能通过 few-shot 恢复不代表完全没有参数遗忘；真实系统中需要额外提示本身也是能力成本。"],
+        followups: ["log-likelihood 评测与生成式评测为什么可能结论相反？", "怎样设计 probe 区分知识与行为？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-27", module: "sft", topic: "知识更新", level: "高频", origin: "校正",
+        question: "SFT 能否注入新知识？为什么事实更新常不可靠？",
+        answer: "能：重复、高质量且一致的示范可以改变模型对新事实的条件概率；但参数知识更新容易过拟合表述、缺乏组合泛化、与旧事实冲突并产生旁路影响，因此动态知识更适合 RAG/工具，稳定技能才更适合训练。",
+        sections: [
+          ["能学到什么", ["新实体—属性关联。", "领域术语与格式。", "程序性技能和任务映射。", "特定决策策略。"]],
+          ["不可靠原因", ["少量样本只覆盖有限问法，换表述后不能召回。", "模型已有强先验会与新事实竞争。", "事实与技能共享参数，局部更新可能伤及邻近知识。", "时间变化的事实会很快过期。"]],
+          ["选择原则", "静态、高频、需要低延迟内化的知识可考虑训练；动态、可追溯、长尾或高风险事实优先检索/工具，并在回答中提供来源。"]
+        ],
+        traps: ["“预训练没见过的知识，SFT 一定无法注入”是错误的绝对化。正确表述应讨论可靠性、泛化和代价。"],
+        followups: ["如何评测一个新事实是否真正泛化而非背诵？", "何时选择 continued pretraining 而不是 SFT？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["预训练与评估", "ch06_pretrain_eval.md"]]
+      },
+      {
+        id: "sft-28", module: "sft", topic: "推理能力", level: "高频", origin: "校正",
+        question: "SFT 只能学习推理格式，不能学习推理能力吗？",
+        answer: "不能绝对化。CoT SFT 可以迁移可模仿的推理程序、分解策略和领域技巧；但它主要拟合示范轨迹，探索全新策略与超越教师通常更依赖强基座、数据多样性、验证器与 RL。",
+        sections: [
+          ["SFT 擅长", ["把已有潜在能力稳定映射到显式步骤。", "学习证明/代码/工具调用的结构。", "从强教师蒸馏成熟策略到学生。", "提高单次采样命中高质量推理 mode 的概率。"]],
+          ["SFT 局限", ["示范只有一条路径，无法表达错误探索的相对价值。", "训练只见教师前缀，学生偏离后缺乏恢复监督。", "可能复制冗长、伪推理或教师偏差。"]],
+          ["DeepSeek 证据", "V3/R1 的蒸馏表明 SFT 能有效迁移推理能力；R1‑Zero 又表明 RL 可在无 CoT SFT 下探索出反思与长推理。两者是互补而非互斥。"]
+        ],
+        traps: ["把‘RL 能涌现推理’误解为‘SFT 对推理无效’。", "答案正确不等于中间 CoT 忠实，不能把可见推理当作完整内部机制。"],
+        followups: ["为什么大模型蒸馏到小模型常优于小模型直接 RL？", "如何过滤伪 CoT？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"], ["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"]]
+      },
+      {
+        id: "sft-29", module: "sft", topic: "暴露偏差", level: "进阶", origin: "补充",
+        question: "Teacher forcing 的 exposure bias 是什么？它在 SFT 中如何出现？",
+        answer: "训练时模型始终以真实历史 token 为条件，推理时却必须以自己生成的历史为条件；一旦早期出错，模型进入训练未覆盖的状态，误差可能累积。",
+        sections: [
+          ["形式", "训练分布来自 expert prefixes，部署状态分布来自 student policy。两者的 state visitation distribution 不一致称为 covariate shift。"],
+          ["症状", ["长生成越到后面越偏离。", "多步工具任务中一次格式错误导致后续无法恢复。", "离线蒸馏在教师完美轨迹上分数高，但学生真实 rollout 差。"]],
+          ["缓解", ["收集学生 rollout 上的纠错示范。", "迭代式数据聚合或 on-policy distillation。", "训练错误恢复、重试和工具异常样本。", "RL 用真实序列级结果信号优化学生访问到的轨迹。"]]
+        ],
+        traps: ["exposure bias 不等于普通过拟合；它是训练和推理条件状态分布的结构性差异。"],
+        followups: ["Scheduled sampling 为什么在语言模型中并非万能？", "OPD 如何同时获得 on-policy 状态和 token 级密集监督？"],
+        sources: [["OPD 笔记", "../common_knowledge/21_on_policy_distillation.md"]]
+      },
+      {
+        id: "sft-30", module: "sft", topic: "过拟合与重复", level: "必会", origin: "已有＋补充",
+        question: "SFT 后模型陷入重复，可能有哪些原因？如何定位？",
+        answer: "常见原因包括同质/重复数据、过多 epoch、学习率过大、EOS 监督错误、解码设置不当和小模型只学到表面推理模板；需要从数据、labels、训练曲线和生成配置分层排查。",
+        sections: [
+          ["DeepSeek LLM 案例", "数学 SFT 数据增加后 7B 重复率上升；两阶段微调——先全量、再对话数据——可降低重复且保持代码数学表现，DPO 也能改善开放生成。"],
+          ["定位顺序", ["确认 base 模型在同一解码配置下正常。", "检查真实 EOS/EOT 是否参与 loss、服务端是否识别。", "统计训练数据 n-gram、模板和答案长度重复。", "比较不同 checkpoint 的重复率与验证 loss。", "用 greedy 与采样分别测试，排除 temperature/top-p 极端设置。"]],
+          ["修复", ["去重、增加表达多样性与正常终止样本。", "减少 epoch/LR，早停。", "加入高质量对话恢复阶段或偏好优化。", "对长循环设置训练数据过滤与部署重复惩罚，但部署补丁不能替代训练修复。"]]
+        ],
+        traps: ["盲目增大 repetition_penalty 可能破坏代码、公式和必要术语重复。"],
+        followups: ["为什么数学步骤模板对小模型更容易诱发循环？", "如何定义自动重复率指标？"],
+        sources: [["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"], ["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-31", module: "sft", topic: "长度与风格偏差", level: "高频", origin: "补充",
+        question: "为什么 SFT 容易把模型训得更啰嗦、更模板化？",
+        answer: "token-average MLE 让长答案贡献更多目标 token，教师数据又常偏好完整、分点、带免责声明的写法；重复模仿后这些表面模式成为高概率默认行为。",
+        sections: [
+          ["来源", ["数据收集偏向‘看起来更全面’的长答案。", "同一教师与统一提示产生一致话术。", "长 CoT 蒸馏把推理长度税一并迁移。", "按 token 平均使长样本梯度占比更高。"]],
+          ["缓解", ["显式设计不同长度、语气和格式的数据。", "按样本/领域重权重，限制长样本 token share。", "加入简洁性 rubric 或偏好数据。", "评测在满足正确性前提下的 token efficiency。"]],
+          ["不要过度修剪", "过强长度惩罚会压制复杂推理、遗漏约束；应把答案难度与长度条件化，而不是所有问题统一短。"]
+        ],
+        traps: ["长度本身既不是质量也不是错误；问题是长度是否由任务需要决定。"],
+        followups: ["V3.2 Speciale 与正式版如何体现性能—长度取舍？", "如何构造 length-controlled preference pairs？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"], ["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"]]
+      },
+      {
+        id: "sft-32", module: "sft", topic: "幻觉", level: "高频", origin: "补充",
+        question: "为什么 SFT 不能从根本上消除幻觉？它能改善什么？",
+        answer: "MLE 学习在给定上下文下生成训练目标，不直接校准事实真值或不确定性；SFT 可教模型引用上下文、承认未知、调用检索和遵守证据格式，但事实覆盖与运行时验证仍需预训练、RAG、工具和评测。",
+        sections: [
+          ["可改善", ["遇到未知时的行为策略。", "使用提供材料而非凭空回答。", "引用与证据格式。", "调用搜索/数据库的触发条件。"]],
+          ["难以保证", ["长尾事实是否存储正确。", "新鲜信息是否更新。", "生成时每个断言是否可验证。", "模型置信语言与真实准确率是否校准。"]],
+          ["数据设计", "加入可回答、不可回答、信息冲突、证据不足和工具失败样本，避免只训练‘任何问题都给完整答案’。"]
+        ],
+        traps: ["用大量拒答样本降低幻觉可能制造过度拒答。需要同时测 helpfulness 与 answerability calibration。"],
+        followups: ["如何区分知识错误与检索错误？", "为什么生成式正确率和 calibration 要分别评测？"],
+        sources: [["DeepSeek‑V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"]]
+      },
+      {
+        id: "sft-33", module: "sft", topic: "评测体系", level: "必会", origin: "补充",
+        question: "一个合格的 SFT 评测矩阵应包含哪些层次？",
+        answer: "至少包含数据/实现单测、离线 loss、能力基准、指令遵循、开放生成、人类/模型偏好、安全、保留能力、效率和真实流量回放；任何单一分数都不足以选 checkpoint。",
+        sections: [
+          ["离线层", ["held-out response NLL 与按领域 loss。", "模板/labels 单元测试。", "污染与近重复检查。"]],
+          ["能力层", ["目标领域正确率、pass@k、执行成功率。", "IFEval/约束遵循、结构化输出、工具调用。", "通用知识、数学、代码、多语言等回归集。"]],
+          ["行为层", ["开放式 pairwise win rate。", "长度、重复、拒答、幻觉与安全。", "多轮恢复、边界条件和红队。"]],
+          ["系统层", ["吞吐、显存、首 token 延迟、平均输出 token。", "不同量化/推理引擎下的一致性。"]]
+        ],
+        traps: ["PPL/token loss 对 tokenizer 和答案长度敏感，不能直接代表产品质量。", "judge 模型可能偏好自身风格、长答案或特定顺序，需要换序和校准。"],
+        followups: ["如何构造不可泄漏的真实流量回放集？", "为什么 pass@1、pass@k 和 maj@k 回答不同问题？"],
+        sources: [["预训练与评估", "ch06_pretrain_eval.md"], ["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-34", module: "sft", topic: "故障诊断", level: "必会", origin: "补充",
+        question: "训练 loss 正常下降，但模型生成很差，应按什么顺序排查？",
+        answer: "先排接口与 labels，再排数据与解码，最后才调整优化：检查 checkpoint/tokenizer/template、生成前缀和停止 token；可视化 mask；过拟合单样本；对比 base；再看截断、污染、LR 与 checkpoint。",
+        sections: [
+          ["黄金排查顺序", ["确认加载的是正确 checkpoint、adapter 与 tokenizer。", "同一 messages 打印训练/推理 token ids。", "可视化 labels，确认 assistant 正文与 EOS 有监督。", "用 1–8 条样本过拟合，模型应能复现目标。", "检查 generation 参数与 stop 配置。", "比较不同训练步 checkpoint，定位何时劣化。"]],
+          ["loss 假象", ["大量 prompt/padding 被错误计 loss，数值下降却不学回答。", "答案泄漏到输入不可见边界之外。", "训练与验证共享重复样本。", "只剩少量容易 token 有效，平均 loss 很漂亮。"]],
+          ["最小化原则", "先用单卡、单样本、无 packing、固定模板复现；最小配置正确后再逐项恢复分布式、packing 与混合精度。"]
+        ],
+        traps: ["一遇到坏生成就继续训练，往往放大问题。", "只检查字符串，不检查 token id 与 shift 后 labels。"],
+        followups: ["单样本都无法过拟合通常说明什么？", "如何判断问题发生在训练还是推理服务？"],
+        sources: [["SFT 提纲", "ch07_sft.md"]]
+      },
+      {
+        id: "sft-35", module: "sft", topic: "与后续 RL 的接口", level: "进阶", origin: "已有＋补充",
+        question: "为什么 SFT 过度训练可能伤害后续 RL？",
+        answer: "过度 SFT 会让策略过于确定、生成熵下降并收窄探索分布；RL 难以采到多样候选，组内奖励方差变小，正确但低概率的新策略也更难出现。",
+        sections: [
+          ["机制", ["teacher forcing 强力抬高单一示范轨迹。", "多 epoch 重复数据导致 logits 尖锐。", "格式与长度模式固化，rollout 多样性下降。", "GRPO 同题多采样若答案高度相同，组相对优势信号退化。"]],
+          ["监控", ["token entropy、不同温度下 distinct answers。", "每组 reward std 与全同奖励组比例。", "pass@k 相对 pass@1 的增益。", "策略到 base/reference 的 KL。"]],
+          ["取舍", "SFT 必须把目标行为概率从接近 0 提到可探索区，但不必把所有行为压成唯一轨迹；为 RL 留出可用熵。"]
+        ],
+        traps: ["熵越高不一定越好；无意义噪声也会提高熵。目标是有质量的探索多样性。"],
+        followups: ["为什么 all-same reward group 对 GRPO 几乎没有学习信号？", "如何通过数据多解与轻量 SFT 保留探索？"],
+        sources: [["SFT 提纲", "ch07_sft.md"], ["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"]]
+      },
+      {
+        id: "sft-36", module: "sft", topic: "安全对齐", level: "高频", origin: "补充",
+        question: "安全 SFT 为什么容易造成过度拒答？如何平衡 helpfulness 与 safety？",
+        answer: "若危险样本几乎都对应统一拒答，模型会把表面敏感词当捷径；需要细粒度风险 taxonomy、可安全回答的相邻样本、转换式帮助、上下文判断和分层评测，使模型学会区分而非一律拒绝。",
+        sections: [
+          ["数据设计", ["明确允许、限制、禁止三类边界。", "同一主题构造 benign/harmful 对照。", "拒绝时提供安全替代与高层信息。", "加入角色扮演、间接请求、多轮升级和工具风险。"]],
+          ["评测", ["有害请求拒绝率。", "良性敏感请求误拒率。", "拒绝质量与一致性。", "多语言、编码绕过与提示注入。"]],
+          ["系统边界", "SFT 只是防线之一；高风险工具还需要权限、参数校验、沙箱、审计和运行时策略。"]
+        ],
+        traps: ["只看 safety pass rate 会鼓励所有问题都拒绝。", "安全模板重复过多会让模型输出机械免责声明。"],
+        followups: ["如何构造 benign contrast set？", "模型安全对齐与工具权限控制分别解决什么问题？"],
+        sources: [["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "pre-01", module: "prereq", topic: "Self-Attention", level: "必会", origin: "已有",
+        question: "Self‑Attention 的完整计算过程是什么？为什么除以 √dₖ？",
+        answer: "X 经线性投影得到 Q/K/V，先算缩放点积并加 mask，再 softmax 得权重，最后加权 V；除以 √dₖ 将点积方差从约 dₖ 拉回常数量级，避免 softmax 饱和和梯度变小。",
+        formula: "Q=XW_Q, K=XW_K, V=XW_V\nAttention(Q,K,V)=softmax(QKᵀ/√d_k + M)V",
+        sections: [
+          ["方差推导", "若 q_i、k_i 独立、均值 0、方差 1，则 q·k=Σ_i q_i k_i 的方差约为 d_k。除以 √d_k 后方差约为 1。"],
+          ["mask", "decoder 的 causal mask 把未来位置置为 -∞；padding/sequence mask 屏蔽无效 token。mask 必须在 softmax 之前应用。"],
+          ["复杂度", "稠密 attention 的 QKᵀ 与 AV 都是 O(L²d)，注意力矩阵显存 O(L²)。长上下文优化要么降 IO/显存，要么稀疏化/压缩以真正减少有效计算。"]
+        ],
+        traps: ["FlashAttention 不改变标准稠密 attention 的 O(L²) FLOPs。", "多头拆分后总 d_model 不变时，总主计算量与单头同阶。"],
+        followups: ["为什么点积 attention 比加性 attention 更适合 GPU？", "causal mask 如何与 packing mask 合并？"],
+        sources: [["Transformer 提纲", "ch01_transformer_attention.md"]]
+      },
+      {
+        id: "pre-02", module: "prereq", topic: "因果训练", level: "必会", origin: "已有＋补充",
+        question: "Decoder-only 模型训练为什么能并行，而推理必须逐 token？",
+        answer: "训练时 teacher forcing 已知整段真实序列，可一次计算所有位置的 logits，并用 causal mask 防止看未来；推理时下一个 token 未知且依赖刚生成的 token，只能自回归迭代。",
+        sections: [
+          ["训练", ["输入整段 x₀…xₙ₋₁。", "一次矩阵运算得到每个位置的隐藏态。", "shift 后用位置 t 的 logits 预测 xₜ₊₁。"]],
+          ["推理", ["prefill 并行处理 prompt，产生每层 KV cache。", "decode 每步只计算新 token 的 Q/K/V，但读取历史 K/V。", "speculative decoding、MTP 等可一次验证多个候选，提升有效并行度。"]],
+          ["SFT 关联", "assistant-only mask 只改变哪些预测位置进入 loss，不改变因果可见性。prompt 仍作为上下文参与前向。"]
+        ],
+        traps: ["loss mask 与 attention mask 是两个不同概念：前者控梯度目标，后者控可见信息。"],
+        followups: ["为什么推理时有 KV cache 仍是 O(L) 历史读取？", "speculative decoding 为什么不改变模型分布？"],
+        sources: [["Transformer 提纲", "ch01_transformer_attention.md"]]
+      },
+      {
+        id: "pre-03", module: "prereq", topic: "MHA/MQA/GQA/MLA", level: "必会", origin: "已有＋校正",
+        question: "MHA、MQA、GQA、MLA 分别如何减少 KV Cache？",
+        answer: "MHA 每个 Q 头有独立 K/V；MQA 所有 Q 头共享一组 K/V；GQA 每组 Q 头共享一组 K/V；MLA 把 K/V 联合下投影为低维 latent，只缓存 latent 与少量位置分量，并通过矩阵吸收避免显式完整还原。",
+        sections: [
+          ["容量—效率", ["MHA：KV 最大，表达最自由。", "MQA：KV 约降到 1/h，但共享最强，可能掉质量。", "GQA：在 KV 组数与质量间折中。", "MLA：不是简单减少头数，而是学习低秩潜在表示。"]],
+          ["MLA 关键", "DeepSeek‑V2 的 K/V 联合压缩解决推理 KV cache；Query 压缩主要服务训练激活。解耦 RoPE 的共享位置 key 仍需缓存。"],
+          ["RL 关联", "online RL rollout 同时保留大量长序列的 KV cache，压缩 KV 可提高 batch、context 和采样吞吐。"]
+        ],
+        traps: ["MLA 推理通常利用矩阵吸收，并非每步真的先恢复完整 K/V。", "MQA 主要省 KV 投影、缓存与带宽，不会把所有 QK 点积直接省掉 h 倍。"],
+        followups: ["为什么 RoPE 会破坏 MLA 的矩阵吸收？", "KV cache 公式中哪些维度被 GQA 改变？"],
+        sources: [["Transformer 提纲", "ch01_transformer_attention.md"], ["V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"]]
+      },
+      {
+        id: "pre-04", module: "prereq", topic: "KV Cache", level: "必会", origin: "已有＋校正",
+        question: "KV Cache 占用如何估算？它降低了哪部分计算？",
+        answer: "标准 MHA KV 显存约为 2×层数×batch×序列长×KV头数×head_dim×每元素字节；它避免每个 decode step 重算历史 token 的 K/V 投影，但当前 query 仍需与全部历史 key 点积。",
+        formula: "Memory_KV ≈ 2 · N_layers · B · L · H_kv · D_head · bytes",
+        sections: [
+          ["复杂度", "没有 cache 时每一步都重做完整前缀，累计代价极高；有 cache 后历史投影复用，但单个新 token attention 仍随上下文长度 L 线性读取与计算。"],
+          ["系统瓶颈", "decode 常是 memory-bandwidth bound：每生成一个 token 只做少量新计算，却要读取大量权重与 KV。batch 增大可提高权重复用，但 KV 内存也线性增长。"],
+          ["优化", "GQA/MQA/MLA、KV 量化、paged attention、prefix caching、稀疏 attention 和 context management 分别从表示、精度、内存管理、复用和长度上降成本。"]
+        ],
+        traps: ["“KV cache 把生成复杂度从 O(n²) 降到 O(n)”需要说明口径：它降低历史投影重算；整段 attention 累积仍含随长度增长的点积。"],
+        followups: ["paged attention 解决碎片还是减少理论 KV 大小？", "为什么 prefix cache 对重复 system prompt 有价值？"],
+        sources: [["Transformer 提纲", "ch01_transformer_attention.md"]]
+      },
+      {
+        id: "pre-05", module: "prereq", topic: "FlashAttention", level: "必会", origin: "已有",
+        question: "FlashAttention 为什么更快、更省显存，却不降低计算复杂度？",
+        answer: "它用 tiling 把 Q/K/V 块放到片上 SRAM，借助 online softmax 分块累计，不向 HBM 写出完整 L×L attention 矩阵；反向再重算必要统计，用额外计算换显存和 IO。",
+        sections: [
+          ["核心", ["IO-aware：减少 HBM↔SRAM 数据搬运。", "online softmax：维护分块最大值与指数和，结果与全局 softmax 精确等价。", "recomputation：反向不保存巨大注意力矩阵。"]],
+          ["复杂度", "标准精确 attention 仍需计算所有 query-key 对，因此 FLOPs 为 O(L²d)；显存从显式 O(L²) 中间量降为近似线性级别。"],
+          ["版本", "后续版本改进序列维并行、work partition、Hopper 异步与 FP8 利用率；核心思想仍是让数据留在更快的存储层级。"]
+        ],
+        traps: ["不要把 FlashAttention 与 sparse attention 混为一谈。", "实际速度取决于序列长度、head dim、硬件和 mask 形态。"],
+        followups: ["online softmax 如何合并旧块和新块的最大值？", "为什么任意 block-diagonal mask 可能影响 kernel 效率？"],
+        sources: [["Transformer 提纲", "ch01_transformer_attention.md"], ["FlashAttention 笔记", "../common_knowledge/4_flash_attention.md"]]
+      },
+      {
+        id: "pre-06", module: "prereq", topic: "RoPE/YaRN", level: "必会", origin: "已有＋校正",
+        question: "RoPE 如何编码相对位置？YaRN 为什么能扩展上下文？",
+        answer: "RoPE 按位置旋转 Q/K 的二维分量，使点积含相对角差；YaRN 对不同频率做分段/NTK-aware 缩放，并用 attention scaling 校正长上下文分布，通常还配合少量长上下文继续训练。",
+        sections: [
+          ["RoPE", "位置 m、n 的旋转矩阵满足 R_mᵀR_n=R_{n-m}，所以点积自然依赖相对距离；不同维度频率覆盖短程到长程关系。"],
+          ["外推问题", "超过训练长度后，旋转相位和注意力模式进入 OOD；直接位置插值会压缩分辨率，NTK-aware/YaRN 让不同频率采用不同策略。"],
+          ["DeepSeek‑V2", "MLA 把 RoPE 解耦到单独的位置分量，V2 用 YaRN 从 4K 扩到 128K，并在 32K 序列上继续训练约 1000 步。"]
+        ],
+        traps: ["YaRN 不是严格‘免训练’定律；许多成功配方会做少量长上下文继续训练和重新校准。", "RoPE 外推好于绝对位置不代表可无限外推。"],
+        followups: ["为什么低频与高频维度的缩放需求不同？", "长上下文训练为什么还要关注数据中有效长程依赖？"],
+        sources: [["位置编码", "ch02_positional_encoding.md"], ["YaRN 笔记", "../common_knowledge/11_yarn.md"]]
+      },
+      {
+        id: "pre-07", module: "prereq", topic: "归一化", level: "必会", origin: "已有＋校正",
+        question: "Pre‑LN 与 Post‑LN 的差别是什么？RMSNorm 为什么常用？",
+        answer: "Pre‑LN 在子层前归一化，使残差主干近似恒等路径，深层梯度更稳定；RMSNorm 只按均方根缩放、不减均值，计算更简单且在 LLM 中效果良好。",
+        formula: "Pre-LN: x_{l+1}=x_l+F(Norm(x_l))\nRMSNorm(x)=γ⊙x / √(mean(x²)+ε)",
+        sections: [
+          ["梯度路径", "Pre‑LN 的残差支路不经过归一化，反向梯度可沿恒等路径传播；Post‑LN 深层训练通常更依赖 warmup、初始化与残差缩放。"],
+          ["RMSNorm", "去掉均值中心化和 bias，并不代表没有可学习 scale γ。它更便宜、数值稳定，已成为 Llama/Qwen/DeepSeek 常见配置。"],
+          ["边界", "‘Pre‑LN 不需要 warmup’并非绝对；大规模训练仍常用 warmup 来稳定 optimizer moments 与早期更新。"]
+        ],
+        traps: ["不要把归一化统计维度说成 batch 维；LayerNorm/RMSNorm 都在单 token 的 feature 维工作。"],
+        followups: ["RMSNorm 是否平移不变？", "为什么后训练学习率变化仍可能影响 norm 参数？"],
+        sources: [["归一化与激活", "ch03_norm_activation.md"], ["RMSNorm 笔记", "../common_knowledge/1_rms_norm.md"]]
+      },
+      {
+        id: "pre-08", module: "prereq", topic: "SwiGLU", level: "高频", origin: "已有＋校正",
+        question: "SwiGLU 的结构和参数量补偿是什么？",
+        answer: "SwiGLU 用一条线性分支与一条 SiLU 门控分支逐元素相乘，再投影回模型维度；因包含三个矩阵，常把 FFN 中间维度设为约 8d/3，以接近传统 4d 两矩阵 FFN 的参数量。",
+        formula: "SwiGLU(x) = (xW_gate ⊙ SiLU(xW_up)) W_down\nSiLU(z)=z·σ(z)",
+        sections: [
+          ["优势", ["门控允许输入相关的信息选择。", "SiLU 平滑、非单调，梯度性质优于 ReLU 硬截断。", "在等参数/等计算比较下通常提升语言建模性能。"]],
+          ["MoE 关联", "MoE 通常把 FFN/SwiGLU 块替换为专家，因此专家容量、激活参数与通信主要集中在这些投影。"],
+          ["DeepSeek‑V4", "V4 预训练还讨论了 SwiGLU clamping 作为训练稳定性措施；这是数值稳定工程，不改变其基本结构。"]
+        ],
+        traps: ["门控分支和内容分支的命名在实现间可能交换，关键是逐元素乘与三投影结构。"],
+        followups: ["为什么中间维度约 8d/3 而不是 4d？", "MoE 专家为什么通常放在 FFN 而非 attention？"],
+        sources: [["归一化与激活", "ch03_norm_activation.md"], ["SwiGLU 笔记", "../common_knowledge/2_swiglu.md"]]
+      },
+      {
+        id: "pre-09", module: "prereq", topic: "Tokenizer", level: "高频", origin: "已有＋校正",
+        question: "BPE、WordPiece、SentencePiece 的关键区别是什么？词表大小如何影响 SFT？",
+        answer: "BPE 按高频相邻单元合并，WordPiece 以似然相关准则选子词，SentencePiece 是可直接处理原始文本的 tokenizer 工具/框架并可实现 BPE 或 Unigram；词表越大序列常越短，但 embedding、长尾 token 与多语言分配也更复杂。",
+        sections: [
+          ["SFT 影响", ["特殊 token 必须被正确注册且 id 与 checkpoint 对齐。", "代码、中文和多语言的 tokenization 效率影响序列长度、训练成本与输出上限。", "新增 token 后需 resize embedding/lm_head，并训练新行，否则表示随机。"]],
+          ["Byte fallback", "字节级或 byte fallback 可避免 OOV，但罕见字符串可能被拆得很长，影响长上下文预算。"],
+          ["比较", "不同 tokenizer 的 token-level perplexity、tokens/s 与上下文 token 数不能直接横向比较。"]
+        ],
+        traps: ["SentencePiece 不是一种唯一的合并算法；它可承载 BPE 或 Unigram。", "‘直接在 Unicode 字节上做’并不适用于所有 SentencePiece 配置。"],
+        followups: ["新增 special token 为什么需要训练 embedding？", "tokenizer fertility 如何影响多语言公平性？"],
+        sources: [["预训练与评估", "ch06_pretrain_eval.md"]]
+      },
+      {
+        id: "pre-10", module: "prereq", topic: "Perplexity", level: "必会", origin: "已有＋补充",
+        question: "Perplexity 的定义、直觉与局限是什么？SFT 后 PPL 上升是否一定变差？",
+        answer: "PPL 是平均 token NLL 的指数，表示模型在该 tokenization 与数据分布上的不确定性；SFT 改变输出分布，通用预训练 PPL 可能上升而指令遵循变好，因此必须结合目标任务与保留能力评测。",
+        formula: "PPL = exp[-(1/N) Σ_t log p(x_t|x_<t)]",
+        sections: [
+          ["直觉", "PPL=10 可粗略理解为每步面对约 10 个等概率选项，但真实分布并非均匀，所以只是直觉。"],
+          ["SFT 评测", "可计算只在 assistant token 上的 response PPL，并按领域/长度分桶；若不同模型 tokenizer 不同，优先比较 bits-per-byte/character 或下游指标。"],
+          ["局限", ["不直接衡量事实、帮助性、安全、工具成功率。", "对 tokenizer 与数据预处理敏感。", "平均值掩盖长尾和不同任务冲突。"]]
+        ],
+        traps: ["后训练模型在通用语料 PPL 变差可能是 alignment tax，也可能只是输出策略与评测目标不匹配。"],
+        followups: ["为什么 response-only PPL 与 full-sequence PPL 不同？", "bits-per-byte 如何改善跨 tokenizer 比较？"],
+        sources: [["预训练与评估", "ch06_pretrain_eval.md"], ["PPL 笔记", "../common_knowledge/6_perplexity.md"]]
+      },
+      {
+        id: "pre-11", module: "prereq", topic: "Scaling Law", level: "高频", origin: "已有＋校正",
+        question: "Scaling law 对后训练工程师最重要的启示是什么？",
+        answer: "预训练规模、数据质量与模型容量决定可被后训练利用的基座；后训练能重新分配行为概率、迁移技能并有限更新知识，但无法用少量对齐数据稳定替代广泛预训练。",
+        sections: [
+          ["Chinchilla 主线", "给定训练计算，参数量与训练 token 应协同扩展；经典结果常被概括为约 20 tokens/parameter 的 compute-optimal 区间，而不是简单 N≈D 的数值等号。"],
+          ["推理成本取舍", "实际部署常把小模型训练得远超 compute-optimal token 数，因为一次性多花训练算力可换长期低推理成本。"],
+          ["后训练", "若 base 的 pass@k 已包含正确策略，SFT/RL 可提高 pass@1/maj@k；若任何采样都不会，必须靠更强数据、工具、蒸馏或基础训练扩大支持集。"]
+        ],
+        traps: ["把 Chinchilla 说成‘参数量数字等于 token 数字’不准确，应谈计算最优缩放与约 20 tokens/parameter 的经典结论。", "后训练不能凭空创造能力也是趋势性说法，不应推导成 SFT 绝对不能学新知识。"],
+        followups: ["为什么部署最优与训练 compute-optimal 不同？", "pass@k 如何反映 base 模型的潜在支持集？"],
+        sources: [["预训练与评估", "ch06_pretrain_eval.md"], ["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "pre-12", module: "prereq", topic: "MoE", level: "必会", origin: "已有",
+        question: "MoE 为什么能解耦总参数与激活参数？代价是什么？",
+        answer: "MoE 用 router 为每个 token 只选择少数 FFN experts，因此模型可拥有很大总容量却只计算 top‑K 专家；代价是全部专家权重的存储、all‑to‑all 通信、路由均衡、容量溢出和训练/推理一致性。",
+        formula: "MoE(x)=Σ_{i∈TopK(x)} g_i(x)·Expert_i(x)",
+        sections: [
+          ["两个参数口径", ["总参数：决定权重存储与潜在知识容量。", "激活参数：单 token 实际经过的参数，近似计算成本。"]],
+          ["系统代价", "token 按路由跨设备发送，再把专家输出发回；通信常成为瓶颈，需要 expert parallel、节点受限路由与通信—计算重叠。"],
+          ["后训练", "同一 token 在 rollout 与训练若走不同专家，重要性比和梯度对应的实际网络会错位；V3.2 用 keep routing 显式维护一致性。"]
+        ],
+        traps: ["MoE 的总参数大不代表每 token FLOPs 同样大。", "MoE 扩大 FFN 容量，不等于注意力容量同步扩大。"],
+        followups: ["为什么第一层有时保留 dense FFN？", "expert parallel 与 tensor parallel 的通信模式有什么区别？"],
+        sources: [["MoE 提纲", "ch04_moe.md"], ["MoE 笔记", "../common_knowledge/7_mixture_of_experts.md"]]
+      },
+      {
+        id: "pre-13", module: "prereq", topic: "负载均衡", level: "必会", origin: "已有＋补充",
+        question: "MoE 为什么会路由坍缩？辅助均衡损失与动态偏置如何解决？",
+        answer: "router 的正反馈会让热门专家更常被选、更充分训练，进一步变热门；传统 fᵢPᵢ 辅助损失通过梯度鼓励均衡，DeepSeek‑V3 则用只影响 top‑K 选择的动态 bias 调节负载，减少主任务梯度污染。",
+        sections: [
+          ["传统损失", "f_i 是实际选择频率、P_i 是平均路由概率；让二者乘积之和变小可抑制集中，但权重过大会强迫无关 token 走非最佳专家，伤害专业化。"],
+          ["V3 动态偏置", "过载专家 bias 下调、欠载专家上调；bias 仅参与‘选谁’，最终专家输出权重仍用原始 affinity，因此均衡目标不作为可导 loss 混入语言模型梯度。"],
+          ["统计粒度", "序列级约束太强，会逼一条纯数学序列也均匀使用专家；batch 级允许领域相关专业化，同时保证总体吞吐。"]
+        ],
+        traps: ["V3 并非完全没有任何辅助项：仍可保留极小序列级均衡损失作为兜底。"],
+        followups: ["为什么 f_i 中的离散 top‑K 不可导，需要 P_i 提供梯度？", "设备均衡与专家语义均衡目标为何不同？"],
+        sources: [["MoE 提纲", "ch04_moe.md"], ["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"]]
+      },
+      {
+        id: "pre-14", module: "prereq", topic: "Token Drop", level: "高频", origin: "已有＋校正",
+        question: "Token drop 是什么？为什么它会影响后训练正确性？",
+        answer: "专家容量有限时，超出容量的 token 可能跳过被路由专家或被丢弃；这不只是效率细节，它改变了实际网络函数。rollout 与训练若处理不一致，会让采样策略和被优化策略不一致。",
+        sections: [
+          ["容量", "capacity factor 为专家预留相对平均负载的容量；过小提高丢弃率，过大增加 padding/空算和峰值显存。"],
+          ["DeepSeek 演进", ["V2 用设备级 token dropping 兜底，并让约 10% 序列 token 不丢。", "V3 依靠更好的负载均衡实现 no token-dropping，提高训练/推理一致性。"]],
+          ["RL", "策略概率来自推理引擎，梯度来自训练引擎；若 token drop、路由、量化或采样 mask 不同，名义 on-policy 会变成实际 off-policy。"]
+        ],
+        traps: ["‘训练可丢、推理关闭就没事’对 on-policy RL 过于草率，关键是 rollout 网络与训练网络行为一致。"],
+        followups: ["token drop 与 padding token 有什么区别？", "为什么 no-token-drop 对 MoE RL 特别重要？"],
+        sources: [["MoE 提纲", "ch04_moe.md"], ["V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"]]
+      },
+      {
+        id: "pre-15", module: "prereq", topic: "AdamW", level: "必会", origin: "已有",
+        question: "AdamW 为什么要把 weight decay 与梯度更新解耦？",
+        answer: "在 Adam 中把 L2 正则写进梯度后，会被逐参数二阶矩缩放，使不同方向的衰减强度失真；AdamW 直接按学习率收缩参数，再叠加自适应梯度步，得到更可控的正则。",
+        formula: "θ ← (1-ηλ)θ - η · m̂/(√v̂+ε)",
+        sections: [
+          ["矩估计", "m 跟踪梯度均值，v 跟踪平方梯度；bias correction 修正训练早期从零初始化的偏差。"],
+          ["LLM 常见值", "β₁ 常为 0.9，β₂ 常见 0.95 或其他经过规模校准的值；不能把某一组参数当通用定律。"],
+          ["后训练", "小数据下 optimizer update 对单批更敏感，应同时监控 gradient norm、update norm、参数组和有效 token 数。"]
+        ],
+        traps: ["AdamW 的 weight decay 与一般非自适应 SGD 下的 L2 等价关系不能直接照搬。"],
+        followups: ["bias correction 为什么必要？", "为什么 norm/bias 通常不做 weight decay？"],
+        sources: [["训练系统", "ch05_training_system.md"], ["AdamW 笔记", "../common_knowledge/3_adamw.md"]]
+      },
+      {
+        id: "pre-16", module: "prereq", topic: "混合精度", level: "必会", origin: "已有＋校正",
+        question: "BF16、FP16、FP32 在混合精度训练中如何分工？",
+        answer: "前向/反向的张量核计算常用 BF16/FP16，累加与敏感统计使用更高精度，优化器状态常用 FP32；BF16 指数范围接近 FP32，较少溢出，但尾数精度低，不能笼统说完全不需要任何数值保护。",
+        sections: [
+          ["格式", ["FP16：5 位指数、10 位尾数，精度较高但动态范围小，常需 loss scaling。", "BF16：8 位指数、7 位尾数，动态范围大，LLM 更常用。", "FP32：8 位指数、23 位尾数，用于 master weights/optimizer/归约等敏感部分。"]],
+          ["数值稳定", "softmax、norm、loss reduction、梯度累加等可能升精度；现代 kernel 会按算子特性混合使用，而不是全模型单一 dtype。"],
+          ["DeepSeek", "V3 规模化验证 FP8 混合精度预训练；V4 后训练进一步对部署用 FP4 做 QAT，但仍保留高精度 master/梯度路径。"]
+        ],
+        traps: ["BF16 不需要传统 loss scaling 的情况很多，但仍可能出现 NaN/Inf，不能把动态范围等同于无限稳定。"],
+        followups: ["为什么低精度乘法常配高精度累加？", "FP8/FP4 为什么需要 scale 与 block quantization？"],
+        sources: [["训练系统", "ch05_training_system.md"], ["V4 论文", "../industry_reports/deepseek/deepseek_v4.pdf#page=33"]]
+      },
+      {
+        id: "pre-17", module: "prereq", topic: "ZeRO/FSDP/3D", level: "必会", origin: "已有＋补充",
+        question: "ZeRO 三阶段与 DP/TP/PP/EP 各自切分什么？",
+        answer: "ZeRO‑1/2/3 依次分片 optimizer、gradient、parameter；DP 切数据，TP 切层内矩阵，PP 切模型层，EP 切 MoE experts。真实大模型通常组合这些维度，并围绕网络拓扑安排通信。",
+        sections: [
+          ["切分对象", ["DP：每份模型处理不同数据，梯度同步。", "TP：单个矩阵乘跨卡，通信频繁，适合高速互联。", "PP：层分段，需 micro-batch 填流水线，存在 bubble。", "EP：专家分布到不同设备，token all-to-all。"]],
+          ["ZeRO", ["Stage 1 分 optimizer states。", "Stage 2 再分 gradients。", "Stage 3 再分 parameters，前向按需 gather。"]],
+          ["后训练", "rollout 与训练的并行策略往往不同，需要权重同步、版本控制和训练—推理数值一致性；长序列还可能加入 context/sequence parallel。"]
+        ],
+        traps: ["‘TP 机内、PP 机间’是常见拓扑启发，不是硬规则。", "ZeRO‑3 与 TP 都能省单卡参数显存，但通信方式和计算切分完全不同。"],
+        followups: ["为什么 PP 需要 micro-batch？", "MoE 的 EP all-to-all 为什么特别昂贵？"],
+        sources: [["训练系统", "ch05_training_system.md"]]
+      },
+      {
+        id: "pre-18", module: "prereq", topic: "Prefill/Decode/Rollout", level: "高频", origin: "补充",
+        question: "Prefill 与 decode 的瓶颈为什么不同？这对在线 RL rollout 有什么影响？",
+        answer: "prefill 对整段 prompt 并行计算，通常更 compute-bound；decode 每步处理一个新 token并读取模型权重和全部 KV，通常更 memory-bandwidth-bound。RL 的长回答和多候选使 decode/KV 成本成为核心瓶颈。",
+        sections: [
+          ["Prefill", ["大矩阵乘并行度高。", "长 prompt 的 attention 仍可能昂贵。", "chunked prefill 可避免长请求阻塞 decode。"]],
+          ["Decode", ["每步小 batch GEMM/GEMV，算术强度低。", "持续读权重与 KV cache。", "continuous batching/paged attention 提高并发利用率。"]],
+          ["RL rollout", "同一 prompt 采 G 个 response，可共享部分 prefix 工作但各自持有后续 KV；MLA、量化、MTP/推测解码、稀疏 attention 和可靠调度直接决定可承受的 group size 与长度。"]
+        ],
+        traps: ["只优化训练 forward/backward 而忽略 rollout，在线 RL 端到端吞吐仍可能很低。"],
+        followups: ["为什么同一 prompt 的多采样适合 prefix caching？", "rollout 与在线服务的 batching 目标有何不同？"],
+        sources: [["Transformer 提纲", "ch01_transformer_attention.md"], ["V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"]]
+      },
+      {
+        id: "ds-01", module: "deepseek", topic: "演进总览", level: "必会", origin: "已有＋补充",
+        question: "请用一条主线讲清 DeepSeek LLM → MoE → V2 → V3 → R1 → V3.2 → V4。",
+        answer: "DeepSeek 先建立双语稠密基座与 SFT/DPO 配方，再用细粒度＋共享专家扩容量；V2 用 MLA 和 GRPO突破推理/对齐效率，V3 把 MoE/FP8/MTP 做到规模化并蒸馏 R1，R1 证明纯 RL 可激发推理，V3.2 扩展稀疏长上下文与 agent RL，V4 用分域 specialist＋多教师 OPD 统一能力并支持百万 token。",
+        sections: [
+          ["按代记忆", ["DeepSeek LLM：7B/67B，双语预训练；1.5M SFT＋DPO，研究重复率与对齐工程。", "DeepSeekMoE：细粒度专家＋共享专家，目标是更高专家专业化。", "V2：236B/激活 21B，MLA、DeepSeekMoE、128K、两阶段 GRPO。", "V3：671B/激活 37B，无辅助损失均衡、MTP、FP8；SFT＋GRPO。", "R1：R1‑Zero 纯 RL；正式 R1 四阶段 SFT/RL；能力蒸馏到小模型。", "V3.2：DSA；specialist distill＋单阶段 mixed RL；agent 与离策略稳定性。", "V4：CSA/HCA 百万上下文；specialist 的 SFT＋RL；最终多教师 full-vocab OPD。"]],
+          ["真正主线", "架构持续压低训练、KV、attention 与 rollout 成本；后训练持续从‘统一模型直接对齐’走向‘分域练强、再稳定合并’，并越来越重视 agent 环境和训练—推理一致性。"]
+        ],
+        traps: ["V4 不是取消所有 RL：取消的是最终统一阶段的 mixed RL，specialist 仍用 RL。", "不要把 R1 当作 V3 的架构换代；R1 重点是后训练推理模型路线。"],
+        followups: ["哪一代首次提出 MLA？", "V3.2 与 V4 在能力合并方式上的根本差别是什么？"],
+        sources: [["DeepSeek 串讲", "ch15_deepseek.md"], ["DeepSeek LLM", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "ds-02", module: "deepseek", topic: "DeepSeek LLM", level: "高频", origin: "已有",
+        question: "DeepSeek LLM 的后训练配方和最有价值的工程发现是什么？",
+        answer: "约 1.2M helpfulness＋0.3M safety 做 SFT，再做 DPO；关键经验包括大模型用更小 LR/更少 epoch、数学数据可能诱发重复、两阶段 SFT 或 DPO 可改善重复，以及多选题数据可能刷榜不提升生成能力。",
+        sections: [
+          ["SFT", ["7B：学习率约 1e‑5、4 epochs，出现轻微过拟合。", "67B：约 5e‑6、2 epochs，说明更大模型对小数据更新需更保守。", "数学数据占比高，数学/代码生成提升显著。"]],
+          ["DPO", "偏好候选由自身 Chat 模型生成，带有 on-policy 思路；1 epoch DPO 提升 MT‑Bench/AlignBench，标准基准变化较小。"],
+          ["负面经验", "加入大规模多选题可显著抬高 C‑Eval，却不改善生成式评测；说明 benchmark-shaped data 会导致形式过拟合。"]
+        ],
+        traps: ["笔记中的‘SFT 不改变知识量/不学习推理’应当视为当时实验的倾向，不是普遍定律。"],
+        followups: ["为什么自身模型生成偏好候选更接近 on-policy？", "多选题分数为什么可能与真实生成能力脱钩？"],
+        sources: [["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "ds-03", module: "deepseek", topic: "重复率", level: "高频", origin: "已有",
+        question: "DeepSeek LLM 的两阶段 SFT 为什么能降低数学数据引发的重复？",
+        answer: "第一阶段用全量数学/代码/通用数据获得能力，第二阶段只用高质量对话数据重新校准终止、表达和对话分布，在不明显丢失数学代码能力的前提下把循环模式概率压低。",
+        sections: [
+          ["现象", "7B 在数学 SFT 增加后更容易无法正常终止并循环某段文本，说明小模型可能只学到重复的表面步骤模板。"],
+          ["为什么有效", ["第二阶段数据提供大量正常终止与自然表达轨迹。", "用较小更新修正输出 mode，而不是重新学习数学知识。", "相当于把能力学习与行为校准在时间上解耦。"]],
+          ["替代", "DPO 用偏好对直接压低重复回答并提升开放生成，也能承担第二阶段行为校准的一部分作用。"]
+        ],
+        traps: ["两阶段顺序会带来后阶段遗忘风险，必须用数学/代码回归集验证；该案例有效不代表所有任务都应最后只训对话。"],
+        followups: ["为什么大模型在该实验中不需要第二阶段？", "如何构造重复回答的偏好对？"],
+        sources: [["DeepSeek LLM 笔记", "../industry_reports/deepseek/deepseek_llm_reading_notes.md"]]
+      },
+      {
+        id: "ds-04", module: "deepseek", topic: "DeepSeekMoE", level: "必会", origin: "已有",
+        question: "DeepSeekMoE 的细粒度专家与共享专家分别解决什么问题？",
+        answer: "细粒度切分在相同激活计算下增加专家组合数，缓解单个专家知识混杂；共享专家始终激活并集中承载通用知识，减少路由专家之间重复学习，从而提高专业化与参数效率。",
+        sections: [
+          ["细粒度", "把 N 个大专家各切成 m 个小专家，同时把 top‑K 扩为 top‑mK，保持总参数与激活 FFN 宽度近似不变，但组合空间从 C(N,K) 激增到 C(mN,mK)。"],
+          ["共享专家", "K_s 个专家对所有 token 激活，承担共性知识；路由专家把容量留给领域特有模式。禁用实验显示共享专家不可被简单替代。"],
+          ["系统边界", "专家太小会降低 GEMM 效率；专家越多也增加路由、通信、负载均衡和权重存储复杂度，所以不是无限切分。"]
+        ],
+        traps: ["共享专家不是 router 选中的热门专家，而是确定性始终激活。", "专业化更强不等于每个专家有可由人类简单命名的单一语义。"],
+        followups: ["为什么细粒度切分保持计算近似不变？", "DeepSeekMoE 为什么第一层有时不用 MoE？"],
+        sources: [["DeepSeekMoE 笔记", "../industry_reports/deepseek/deepseek_moe_reading_notes.md"], ["MoE 提纲", "ch04_moe.md"]]
+      },
+      {
+        id: "ds-05", module: "deepseek", topic: "V2 MLA", level: "必会", origin: "已有＋校正",
+        question: "DeepSeek‑V2 的 MLA 解决什么问题？KV 压缩和 Query 压缩的目的为何不同？",
+        answer: "MLA 通过把 K/V 联合下投影到低维 latent 并只缓存该 latent，大幅降低推理 KV cache；Query 压缩不参与长期缓存，主要减少训练时 Q 路径的激活内存。",
+        formula: "c_t^KV=W_DKV h_t\nk_t^C=W_UK c_t^KV, v_t^C=W_UV c_t^KV\n缓存：c_t^KV ＋ 小维度 RoPE key",
+        sections: [
+          ["矩阵吸收", "推理中可把上投影与 Q/O 等矩阵组合，避免真的为每个历史 token 展开完整 K/V；所以低维 cache 不会被上投影的临时结果抵消。"],
+          ["解耦 RoPE", "位置相关旋转矩阵会夹在可结合的线性矩阵之间，破坏吸收；V2 把位置分量拆出，用小维 q^R/k^R 单独承载 RoPE。"],
+          ["效果与后训练", "V2 报告 KV cache 相比 MHA 大幅下降，并提高生成吞吐；在线 GRPO 需要大量 rollout，因此同显存可容纳更长序列和更大组采样。"]
+        ],
+        traps: ["MLA 的核心不是减少参数，而是减少推理缓存/带宽并保持质量。", "不能把 Q 压缩也说成 KV cache 优化，因为历史 Q 不缓存。"],
+        followups: ["为什么 K/V 联合压缩比各自独立缓存更省？", "解耦 RoPE 的位置 key 为什么仍需缓存？"],
+        sources: [["V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"], ["DeepSeek 串讲", "ch15_deepseek.md"]]
+      },
+      {
+        id: "ds-06", module: "deepseek", topic: "V2 后训练", level: "必会", origin: "已有",
+        question: "DeepSeek‑V2 的 SFT＋两阶段 GRPO pipeline 是什么？",
+        answer: "Base 先以约 1.5M helpful/safety 数据做 2 epoch SFT，再用 GRPO 做在线 RL：先对数学/代码进行推理对齐，再以 helpful、safety 与 rule 等多奖励进行人类偏好对齐。",
+        sections: [
+          ["SFT", "约 1.2M helpfulness＋0.3M safety，学习率约 5e‑6；引入 IFEval、LiveCodeBench 与开放式评测关注实际对齐。"],
+          ["阶段一", "数学用真值、代码用编译/执行反馈等结果信号训练 reasoning 对齐，为后来 RLVR 路线提供雏形。"],
+          ["阶段二", "组合 helpfulness RM、safety RM 与 rule reward，优化开放对话与安全行为；不同目标之间存在 trade-off。"],
+          ["系统", "混合训练/推理引擎、vLLM 大批 rollout、CPU offload 等优化说明在线 RL 的瓶颈不仅是算法，更是持续采样吞吐。"]
+        ],
+        traps: ["V2 使用结果级 reward，同一 response 的 token 常共享序列级 advantage；不要误说成 PRM。"],
+        followups: ["为什么把推理与偏好分两阶段？", "V2 的两阶段设计会带来什么遗忘风险？"],
+        sources: [["V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"]]
+      },
+      {
+        id: "ds-07", module: "deepseek", topic: "GRPO", level: "必会", origin: "已有",
+        question: "GRPO 如何在没有 critic 的情况下估计优势？它省了什么、牺牲了什么？",
+        answer: "对同一 prompt 采样一组回答，用组内 reward 的均值/标准差构造相对优势，再配合 PPO 式 ratio clipping 与 KL；它省去与策略同规模的 value model，但依赖每题多采样且组内相对信号受 reward 分布影响。",
+        formula: "A_i=(r_i-mean(r_1…r_G))/(std(r_1…r_G)+ε)\nρ_{i,t}=π_θ(o_{i,t}|·)/π_old(o_{i,t}|·)",
+        sections: [
+          ["为什么适合推理", "数学/代码同题可便宜采多个候选并客观验证；组内比较不要求学习一个跨题绝对 value function。"],
+          ["资源", "省掉 critic 的权重、梯度、优化器与前向，给 671B MoE 策略和 rollout 留出显存/算力。"],
+          ["局限", ["组大小 G 增加 rollout 成本。", "全对/全错组 std≈0，优势信号弱。", "题目难度与组归一化会改变样本权重。", "长序列、异步 rollout 仍存在 off-policy 与 token 信用分配问题。"]]
+        ],
+        traps: ["GRPO 不是完全不需要 reference/old policy；具体实现仍需行为策略概率、clip 或 KL 等稳定机制。"],
+        followups: ["为什么组内标准化会产生难度偏置？", "sequence-level reward 如何分配给 token？"],
+        sources: [["GRPO 笔记", "../common_knowledge/9_grpo.md"], ["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"]]
+      },
+      {
+        id: "ds-08", module: "deepseek", topic: "在线 RL/对齐税", level: "高频", origin: "已有＋补充",
+        question: "DeepSeek‑V2 为什么强调在线 RL 优于离线方法？什么是 alignment tax？",
+        answer: "在线 RL 在当前策略真实访问的轨迹上收集反馈，减少静态偏好数据的分布错配；alignment tax 指帮助性/安全/风格提升同时造成某些通用或标准基准能力下降。",
+        sections: [
+          ["在线优势", ["能追踪当前策略的新错误与 reward hacking。", "探索得到训练集之外的新轨迹。", "规则奖励可直接闭环，无需为每条答案人工配对。"]],
+          ["离线优势", "DPO/SFT 更简单、稳定、无需在线采样基础设施；当偏好数据接近目标策略且质量高时仍非常有效。"],
+          ["对齐税来源", ["目标分布变化导致 base 任务概率下降。", "安全/风格数据占用有限更新预算。", "多阶段后训练发生遗忘。", "评测模板与 chat 行为不匹配造成虚假税。"]]
+        ],
+        traps: ["不能把 online > offline 当作所有任务的无条件结论；成本、奖励质量和分布决定实际选择。"],
+        followups: ["如何区分真实 alignment tax 与 spurious forgetting？", "为什么 online RL 更依赖训练—推理一致性？"],
+        sources: [["V2 笔记", "../industry_reports/deepseek/deepseek_v2_reading_notes.md"], ["DPO 笔记", "../common_knowledge/22_dpo.md"]]
+      },
+      {
+        id: "ds-09", module: "deepseek", topic: "V3 架构", level: "必会", origin: "已有",
+        question: "DeepSeek‑V3 的三项代表性训练/架构创新是什么？",
+        answer: "无辅助损失的 MoE 负载均衡用动态 bias 避免主 loss 污染；MTP 用额外未来 token 目标致密化训练并可支持推测解码；FP8 混合精度与 DualPipe/通信重叠把 671B MoE 训练成本压低。",
+        sections: [
+          ["无辅助损失均衡", "按专家过载/欠载更新 bias，只影响 top‑K 选择，输出 gate 仍用原 affinity；另保留极小序列级损失兜底。"],
+          ["MTP", "训练加入顺序 MTP 模块预测额外未来 token；主模型共享 embedding/head。推理可丢弃模块保持成本，也可复用为 speculative decoding。"],
+          ["FP8 与系统", "关键 GEMM 使用 FP8/更高精度累加与细粒度 scaling，配合 EP、PP 和 DualPipe，实现大规模训练的稳定性与效率。"]
+        ],
+        traps: ["V3 的‘auxiliary-loss-free’不等于所有辅助 loss 都为零。", "MTP 的主要价值不仅是推理加速，训练时致密监督本身提升主模型。"],
+        followups: ["V3 为什么能做到 no token-dropping？", "MTP 推理时丢弃模块，性能提升为什么仍保留？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"]]
+      },
+      {
+        id: "ds-10", module: "deepseek", topic: "MTP", level: "高频", origin: "已有＋补充",
+        question: "DeepSeek‑V3 的 MTP 在训练与推理阶段分别做什么？",
+        answer: "训练时额外模块在每个位置预测更远的未来 token，为表示提供更密集、带规划性的监督；推理时可完全移除这些模块不增加主模型成本，也可把它们作为 draft 预测并由主模型验证以加速。",
+        sections: [
+          ["训练机制", "第 k 个 MTP 模块结合上一深度隐藏态与未来 token embedding，通过小 Transformer block 和共享输出头预测下一未来 token；各深度 loss 加权进主目标。"],
+          ["为何主模型受益", "额外 loss 的梯度通过共享表示与参数影响主干，即使推理时删模块，主干已经在预训练中学到更可预测未来的表示。"],
+          ["推测解码", "MTP 给出候选 token，主模型一次并行验证；被接受部分严格服从主模型分布，拒绝后回退采样。V3 报告第二个 token 接受率较高并获得解码加速。"]
+        ],
+        traps: ["不要说 V3 一次无验证地直接输出多个 token；精确推测解码需要主模型验证。"],
+        followups: ["MTP 与普通多个独立预测头有什么区别？", "接受率如何影响实际 speedup？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"]]
+      },
+      {
+        id: "ds-11", module: "deepseek", topic: "V3 SFT 数据工厂", level: "必会", origin: "已有",
+        question: "V3 为什么要先训练领域 expert，再用 expert 生成 SFT 数据？",
+        answer: "原始数据常只有题目与可验证奖励，不能直接作为 teacher-forced 答案；领域 expert 通过 RL 探索出高质量轨迹，再经拒绝采样、控长与格式提纯，把奖励形态数据转成问题—回答对供 V3 高效继承。",
+        sections: [
+          ["数据形态转换", "prompt＋verifier → expert RL → 多轨迹采样 → 正确性过滤 → 可读/简洁 response → SFT pair。"],
+          ["分而治之", "数学、代码、逻辑等 specialist 可使用最合适的奖励与训练配置，避免统一大模型上多任务探索互相干扰。"],
+          ["风险隔离", "让较小/独立 expert 承担 RL 不稳定与 reward hacking 风险；最终模型只接收筛选后的高质量轨迹，但也会损失失败探索信息。"]
+        ],
+        traps: ["expert 不是因为目标模型不能 RL，而是兼具数据转换、风险隔离与领域专精价值。"],
+        followups: ["为什么蒸馏后性能通常略低于 expert？", "V4 如何进一步改进多个 expert 的统一？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"]]
+      },
+      {
+        id: "ds-12", module: "deepseek", topic: "V3 奖励模型", level: "高频", origin: "已有＋校正",
+        question: "DeepSeek‑V3 如何组合 rule-based RM 与 model-based RM？为什么让 RM 生成判断理由可能更稳？",
+        answer: "可验证数学/代码优先用答案、编译器和测试等规则奖励；开放任务使用模型 RM。让模型 RM 按 rubric 生成判断依据，可迫使评分关注事实与逻辑，而不是只学习长度、自信语气等表面捷径，但仍不能消除 reward hacking。",
+        sections: [
+          ["规则奖励", "客观、低成本、抗操纵，但覆盖范围有限，验证器自身可能有漏洞。"],
+          ["模型奖励", "能评写作、帮助性与开放问答，但存在分布外失效、位置/长度/风格偏差，且 policy 会主动寻找其漏洞。"],
+          ["CoT judge", "评分前显式检查答案、约束与推理，可提高可审计性；还可用投票、自一致性、对抗样本和人类 anchor 做校准。"]
+        ],
+        traps: ["‘带 CoT 就不会被 hack’过于乐观；judge 仍可能生成看似合理的错误理由。"],
+        followups: ["规则验证器为什么也会被 reward hacking？", "如何评测 RM 在 policy 分布漂移后的可靠性？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"], ["Reward Model", "../common_knowledge/16_reward_model.md"]]
+      },
+      {
+        id: "ds-13", module: "deepseek", topic: "R1‑Zero", level: "必会", origin: "已有＋校正",
+        question: "R1‑Zero 证明了什么？它是否真的完全没有任何先验或格式引导？",
+        answer: "它证明强 base 模型可在不做冷启动 SFT 的情况下，仅靠 GRPO 与规则奖励显著提升推理并涌现长 CoT、反思和自验证；但仍有简洁的输出模板/标签与准确率、格式奖励，并非没有任务先验。",
+        sections: [
+          ["设置", "从 DeepSeek‑V3‑Base 直接做大规模 RL；accuracy reward 验证答案，format reward 要求 reasoning/answer 遵守特定标签。"],
+          ["涌现", "随着训练进行，模型增加思考长度、回溯、验证和替代方案；AIME pass@1 显著提升。"],
+          ["缺陷", "可读性差、语言混杂、格式不稳定，且通用对话/工具等能力不是这条纯推理 RL 线路的重点，因此正式 R1 需要冷启动与多阶段对齐。"]
+        ],
+        traps: ["‘aha moment’是行为观察，不证明模型出现人类式意识。", "R1‑Zero 的成功依赖很强的 V3 base 与可验证任务，不能直接外推到小模型和开放任务。"],
+        followups: ["为什么规则奖励对 R1‑Zero 特别重要？", "format reward 是否可能限制探索？"],
+        sources: [["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"], ["DeepSeek 串讲", "ch15_deepseek.md"]]
+      },
+      {
+        id: "ds-14", module: "deepseek", topic: "R1 pipeline", level: "必会", origin: "已有",
+        question: "正式 DeepSeek‑R1 的四阶段 pipeline 是什么？每阶段解决什么问题？",
+        answer: "少量长 CoT 冷启动 SFT 建立可读格式；推理 RL 用规则奖励强化探索；拒绝采样生成约 60 万推理＋20 万非推理数据重做 SFT 扩展通用能力；最终全场景 RL 用规则与模型奖励完成帮助性/安全对齐。",
+        sections: [
+          ["① 冷启动 SFT", "数千条高质量推理示范，让目标行为概率非零、格式可读、语言一致，为 RL 提供稳定起点。"],
+          ["② 推理 RL", "数学/代码用 accuracy 与规则奖励，另加语言一致性，继续发展长推理、自验证和反思。"],
+          ["③ 拒绝采样＋SFT", "从 RL checkpoint 采样、规则/RM 筛选，加入非推理数据，从 base 重新 SFT，使推理数据不把通用行为完全挤掉。"],
+          ["④ 全场景 RL", "推理任务继续规则奖励，通用任务用 helpfulness/safety 模型奖励，兼顾 reasoning 与人类偏好。"]
+        ],
+        traps: ["第三阶段不是在 RL 模型上简单继续 SFT 的唯一表述；核心是构建新 SFT 数据并训练兼顾多领域的模型。", "R1 不等于只靠纯 RL；正式版大量使用 SFT。"],
+        followups: ["为什么第三阶段要加入非推理数据？", "多阶段顺序如何产生灾难性遗忘？"],
+        sources: [["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"]]
+      },
+      {
+        id: "ds-15", module: "deepseek", topic: "R1 蒸馏", level: "必会", origin: "已有",
+        question: "为什么 R1 蒸馏到小模型常优于小模型直接 RL？",
+        answer: "大模型拥有更广的策略支持集和探索能力，能先通过 RL 找到高质量推理轨迹；小模型用 SFT 模仿这些轨迹比从稀疏奖励中自行发现更容易，而小模型直接 RL 常受探索、容量和 reward sparsity 限制。",
+        sections: [
+          ["蒸馏做法", "用 R1 生成并筛选约 80 万数据，对 Qwen/Llama 基座做 SFT；蒸馏模型没有复现完整 R1 RL pipeline 也能获得强推理。"],
+          ["本质", "把昂贵的策略搜索一次性放到大 teacher 上，再把成功轨迹转成密集 token 监督，摊销到多个学生。"],
+          ["边界", "学生容量限制仍存在；会复制 teacher 的冗长、风格与错误。离线 teacher trajectory 还有 exposure bias，V4 的 OPD进一步在学生轨迹上对齐。"]
+        ],
+        traps: ["蒸馏优于小模型直接 RL 是该设置下的实证，不代表学生永远不需要 RL；蒸馏后 RL 仍可针对部署目标细调。"],
+        followups: ["base checkpoint 为什么影响蒸馏效果？", "hard trajectory distillation 与 full-logit distillation 有何差别？"],
+        sources: [["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"]]
+      },
+      {
+        id: "ds-16", module: "deepseek", topic: "R1 失败尝试", level: "高频", origin: "已有＋校正",
+        question: "R1 为什么没有把 PRM 与 MCTS 作为主路线？",
+        answer: "PRM 的细粒度步骤标注难、自动过程判定易被 hack，且好过程不总保证最终正确；MCTS 在开放 token 空间中分支巨大、value 估计与搜索扩展困难，迭代训练还可能导致局部策略退化，因此当时不如简单规则 outcome reward＋采样有效。",
+        sections: [
+          ["PRM 难点", ["正确步骤边界难定义。", "局部正确不代表全局可完成。", "自动标注器误差被 policy 放大。", "训练与推理额外成本高。"]],
+          ["MCTS 难点", ["动作是 token/片段，分支因子极大。", "何时扩展、如何评估未完成推理困难。", "强 base 自身采样已能提供高质量多样路径。", "搜索结果再训练会改变 policy，旧树价值失真。"]],
+          ["不能过度概括", "论文报告的是当时实现与设置中的失败，不是数学上证明 PRM/MCTS 对 LLM 推理永远无效。"]
+        ],
+        traps: ["把 outcome reward 描述成完全无信用分配问题也不对：整条序列共享信号，仍然稀疏。"],
+        followups: ["PRM 何时仍可能有价值？", "best-of-N 与 MCTS 的搜索结构有什么差别？"],
+        sources: [["R1 笔记", "../industry_reports/deepseek/deepseek-R1_reading_notes.md"], ["PRM 笔记", "../common_knowledge/10_process_reward_model.md"]]
+      },
+      {
+        id: "ds-17", module: "deepseek", topic: "V3.2 DSA", level: "必会", origin: "已有＋补充",
+        question: "DeepSeek Sparse Attention（DSA）如何把昂贵主注意力从 O(L²) 降到 O(Lk)？",
+        answer: "先用低维、少头、FP8、ReLU 的廉价索引器对所有位置打分并选 top‑k，再让完整 MLA 只对选中 token 做精确 attention；索引器仍是便宜的 O(L²)，主注意力才从大常数 L² 降到 Lk。",
+        formula: "原始：aL²\nDSA：bL² + aLk，其中 b≪a、k≪L",
+        sections: [
+          ["为何另建索引器", "若先用真实多头 QKᵀ 再选 top‑k，最贵打分已经做完，只省 AV；廉价索引器的意义是让完整 QK 和 AV 都只触碰 top‑k。"],
+          ["训练", "先用 dense MLA attention 分布蒸馏索引器，学‘重要位置排序’；随后稀疏训练。索引器输入 detach，使主模型 LM loss 与索引 KL 各自优化。"],
+          ["容错", "索引只需高召回地包含重要 token，最终 MLA 在候选集合上重新做精确 softmax；选择误差比直接输出 value 的数值误差更可容忍。"]
+        ],
+        traps: ["DSA 总公式仍含 bL²，不能说整个系统理论复杂度严格完全变为 O(Lk)。", "MLA 压 KV 存储，不意味着完整 attention 打分天然便宜。"],
+        followups: ["为什么索引器使用 ReLU 而非 softmax？", "k 固定时上下文越长，DSA 的相对收益如何变化？"],
+        sources: [["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"], ["NSA 笔记", "../industry_reports/deepseek/Native_Sparse_Attention_reading_notes.md"]]
+      },
+      {
+        id: "ds-18", module: "deepseek", topic: "V3.2 后训练", level: "必会", origin: "已有",
+        question: "V3.2 的 specialist distillation＋单阶段 mixed RL 为什么这样设计？",
+        answer: "先从同一 base 为数学、代码、推理、agent 等领域分别训练 specialist并生成蒸馏数据，把能力汇入统一模型；随后把推理、agent 与人类对齐放进单一 mixed RL 同时优化，弥补蒸馏差距并避免多阶段后训练的灾难性遗忘。",
+        sections: [
+          ["分域", "不同领域拥有不同 prompt、验证器、长度和环境，独立 specialist 可达到更强上限；thinking 与 non-thinking 甚至由不同模型生成。"],
+          ["蒸馏", "统一模型在 specialist 数据上训练后仅略低于专家，说明能力能以行为示范方式合并。"],
+          ["mixed RL", "推理/agent 用规则结果奖励＋长度/语言约束，开放任务用 rubric 引导生成式 RM；统一阶段同时看所有目标，减少后训练顺序覆盖。"]
+        ],
+        traps: ["V3.2 的最终合并依赖 mixed RL；V4 明确把这一最终 mixed RL 换成 OPD，这就是两代核心差别。"],
+        followups: ["mixed RL 为什么仍可能产生负迁移？", "V4 为什么认为 OPD 更适合统一多个 expert？"],
+        sources: [["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"]]
+      },
+      {
+        id: "ds-19", module: "deepseek", topic: "V3.2 RL 稳定性", level: "必会", origin: "已有＋补充",
+        question: "V3.2 扩展 GRPO 的四项稳定性技巧是什么？它们共同解决什么？",
+        answer: "无偏 KL 用重要性采样修正离策略偏差；离策略序列 mask 丢弃高度离策略的负优势样本；keep routing 复用 rollout 的 MoE 路由；keep sampling mask 复用 top‑p/top‑k 动作空间。共同目标是缩小采样策略与训练策略的不一致。",
+        sections: [
+          ["事后梯度修正", ["Unbiased KL：让 reference KL 估计在 behavior/target 不同下仍正确。", "Off-policy sequence masking：只屏蔽‘负优势＋高度离策略’，保留高价值正样本与当前仍会犯的错误。"]],
+          ["事前网络对齐", ["Keep Routing：训练 token 走 rollout 时记录的专家，避免实际网络子空间变化。", "Keep Sampling Mask：训练概率归一化使用采样时同一截断支持集，保持 ratio 的动作空间一致。"]],
+          ["来源", "独立推理引擎数值、量化与 kernel 差异；一批 rollout 多 minibatch 复用；长 agent 轨迹中小偏差累积。"]
+        ],
+        traps: ["GRPO 名义上可 on-policy，但真实工程系统中几乎总存在一定 policy lag 与数值偏差。"],
+        followups: ["为什么只 mask 高度离策略的负样本？", "正优势高离策略样本为什么仍值得保留？"],
+        sources: [["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"], ["无偏 KL", "../common_knowledge/13_unbiased_kl_estimate.md"]]
+      },
+      {
+        id: "ds-20", module: "deepseek", topic: "Agent 数据", level: "高频", origin: "已有",
+        question: "V3.2 的 agent RL 数据为什么强调“难解易验证”？",
+        answer: "RL 需要足够探索难度产生有区分度的奖励，同时需要低成本、客观、可重复的验证器；难解易验证任务正好提供稀疏但可信的闭环，并能通过环境与任务多样性学习可迁移策略。",
+        sections: [
+          ["数据来源", "代码 agent 从 issue‑PR 构造可执行环境；search agent 多智能体生成并交叉验证；general agent 自动创建环境、任务、解答与 verifier。"],
+          ["难度过滤", "保留强模型并非总能做对、但至少偶尔可解的任务，例如 pass@100 非零；过易任务奖励全同，过难任务全错，都缺少有效学习信号。"],
+          ["泛化", "V3.2 的消融显示，多样合成 general agent 任务可提升训练未见的 MCP 等环境，说明环境多样性和验证结构比单一数据量更关键。"]
+        ],
+        traps: ["verifier 可执行不代表无漏洞；agent 会主动寻找 sandbox、测试或状态机漏洞。"],
+        followups: ["为什么全错 group 对 GRPO 没信号？", "如何防止 agent reward hacking 验证器？"],
+        sources: [["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"], ["Agentic RL", "../common_knowledge/24_agentic_rl_and_harness.md"]]
+      },
+      {
+        id: "ds-21", module: "deepseek", topic: "思考上下文", level: "高频", origin: "已有＋补充",
+        question: "V3.2 的 interleaved thinking 与 context management 解决什么问题？",
+        answer: "工具调用多轮中若每次 observation 都清空历史思考，模型会重复重建计划；V3.2 在工具结果轮保留思考，只在新用户消息到来时丢弃旧思考，并在超长轨迹中用 discard/summary 等策略腾出窗口。",
+        sections: [
+          ["工具轮", "assistant reasoning → tool call → tool result 属于同一问题求解过程，保留之前 reasoning 可维持长程计划与避免重复计算。"],
+          ["用户轮", "新 user message 可能开启新意图，旧隐式推理容易污染；因此常清除旧 reasoning，但保留可见回答、工具调用和结果。"],
+          ["超长管理", "V3.2 搜索 agent 比较 Summary、Discard‑75% 与 Discard‑all；简单清空旧工具历史反而可取得强结果，说明许多 observation 用后即弃。"]
+        ],
+        traps: ["若 agent 框架把工具结果伪装成 user message，模型可能触发错误的‘新用户’路径，因此协议语义必须与模板一致。"],
+        followups: ["为什么 reasoning 与 tool history 的保留价值不同？", "context management 如何视为串行 test-time scaling？"],
+        sources: [["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"]]
+      },
+      {
+        id: "ds-22", module: "deepseek", topic: "跨代比较", level: "必会", origin: "补充",
+        question: "V3、R1、V3.2、V4 的后训练范式应如何一眼区分？",
+        answer: "V3 以 R1/expert 轨迹做 SFT，再统一 GRPO；R1 用 SFT 与推理 RL 多阶段交替；V3.2 先 specialist 蒸馏，再单阶段 mixed RL 统一；V4 仍先训练 specialist，但最终用多教师 on-policy distillation 统一，不再用 mixed RL。",
+        sections: [
+          ["V3", "expert/R1 是数据工厂：离线正确轨迹＋拒绝采样进入 SFT，随后规则/模型奖励 GRPO。"],
+          ["R1", "冷启动 SFT → reasoning RL → rejection-sampling SFT → all-scenario RL，重点证明纯 RL 推理与大模型蒸馏。"],
+          ["V3.2", "各域 specialist → 生成蒸馏数据 → 统一 mixed RL，把推理、agent、human alignment 一起练。"],
+          ["V4", "各域 specialist 仍 fine-tuning＋GRPO；统一学生自己 rollout，相关 teacher 对完整词表分布做 reverse-KL，利用密集 token 信号合并十余教师。"]
+        ],
+        traps: ["‘蒸馏’在各代含义不同：V3/R1 常指 hard trajectory SFT；V4 的核心是 on-policy full-logit distillation。"],
+        followups: ["为什么 hard trajectory 只给一个 mode，而 full logits 保留更多信息？", "为什么 V4 的最终统一更接近 policy optimization infrastructure？"],
+        sources: [["V3 笔记", "../industry_reports/deepseek/deepseek_v3_reading_notes.md"], ["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"], ["V4 论文", "../industry_reports/deepseek/deepseek_v4.pdf#page=28"]]
+      },
+      {
+        id: "v4-01", module: "v4", topic: "总 Pipeline", level: "必会", origin: "论文精读＋校正",
+        question: "DeepSeek‑V4 后训练的核心 pipeline 是什么？“mixed RL 被完全替换”应如何准确理解？",
+        answer: "先按领域分别训练 specialist：每个模型经历 fine-tuning 与 GRPO；再由统一学生在自己的轨迹上向十余个领域教师做 multi-teacher OPD。被 OPD 完全替换的是 V3.2 用于最终能力融合的 mixed RL，不是 specialist 内部的 RL。",
+        sections: [
+          ["阶段 A：Specialist Training", ["从 V4 base 出发，为推理、代码、agent、写作等领域准备专属 prompts 和 rewards。", "先 fine-tuning 建立任务行为，再用 GRPO 做领域强化。", "不同 specialist 可使用不同上下文、长度惩罚与奖励配置。"]],
+          ["阶段 B：On‑Policy Distillation", ["统一模型是 student，自己采样训练轨迹。", "根据当前任务选择/加权相关 specialist teacher。", "在学生访问的 token 状态上计算 reverse KL，合并超过十个教师。"]],
+          ["与 V3.2", "V3.2 用蒸馏数据打底后，以单一 mixed RL 同时平衡推理、agent、人类对齐；V4 认为这种能力融合更适合用密集、按 token 的 OPD 完成。"]
+        ],
+        traps: ["把 V4 概括为‘不用 RL’会直接答错。", "OPD 阶段统一的是专家知识和能力，而 specialist 自身仍靠领域 RL 达到高上限。"],
+        followups: ["为什么领域专家要从同一个 base 出发？", "OPD 相比 mixed RL 的监督密度有什么不同？"],
+        sources: [["V4 论文 §5.1", "../industry_reports/deepseek/deepseek_v4.pdf#page=28"], ["OPD 提纲", "ch13_opd.md"]]
+      },
+      {
+        id: "v4-02", module: "v4", topic: "Specialist", level: "必会", origin: "论文精读",
+        question: "V4 的 specialist training 为什么仍采用 fine-tuning → GRPO，而不是直接 RL？",
+        answer: "fine-tuning 先把领域格式、工具协议和高质量行为提到非零概率区域，GRPO 再在领域奖励上探索和强化；这样兼顾稳定冷启动、密集示范监督与可验证结果优化。",
+        sections: [
+          ["Fine-tuning 的作用", ["建立输出 schema、角色行为和基本任务解法。", "缩小 RL 初期搜索空间。", "让稀有工具/推理模式可被 rollout 采到。"]],
+          ["GRPO 的作用", ["优化序列级成功、准确率、judge reward 与长度目标。", "从模型自身多样采样中发现示范数据未覆盖的策略。", "不同领域可使用独立 reward 与超参数。"]],
+          ["分域价值", "统一 RL 的 reward scale、序列长度、验证器与最优超参高度异质；分域可让每个专家分别推到最优，再把融合问题交给 OPD。"]
+        ],
+        traps: ["fine-tuning 在论文中是更宽泛表述，不能在没有额外证据时杜撰精确数据量、学习率或一定等于某种 response-only SFT。"],
+        followups: ["哪些领域可能最需要冷启动 SFT？", "如果 specialist 彼此冲突，OPD 会遇到什么问题？"],
+        sources: [["V4 论文 §5.1.1", "../industry_reports/deepseek/deepseek_v4.pdf#page=28"]]
+      },
+      {
+        id: "v4-03", module: "v4", topic: "Reasoning Effort", level: "必会", origin: "论文精读",
+        question: "V4 的 Non‑think、Think High、Think Max 是如何训练和控制的？",
+        answer: "DeepSeek 为不同推理强度训练使用不同 RL 配置，尤其改变长度惩罚与上下文窗口；Non‑think/High 用 think 标签区分响应形态，Max 还在 system prompt 注入最大推理强度指令，允许更长、更彻底的推理。",
+        sections: [
+          ["三档", ["Non‑think：面向日常低风险任务，快速直觉式回答，不输出完整思考段。", "Think High：复杂分析与规划，使用显式 think 区间。", "Think Max：探索能力边界，要求全面分解、压力测试和中间过程，成本最高。"]],
+          ["训练旋钮", "论文明确指出不同 specialist 在 RL 中使用不同 length penalties 与 context windows，从而形成不同输出长度和推理容量。"],
+          ["产品含义", "reasoning effort 是训练奖励、上下文预算、提示协议与推理时预算共同塑造的行为，不只是推理阶段把 temperature 调高。"]
+        ],
+        traps: ["Max 不是简单把 High 的 max_tokens 拉长；论文还使用特殊 system instruction 并对应不同 RL 配方。", "输出更长不保证总是更准，简单任务可能过度思考。"],
+        followups: ["length penalty 放松为什么能提高 hardest tasks？", "怎样评测不同 effort 的 token efficiency？"],
+        sources: [["V4 论文 Table 2–3", "../industry_reports/deepseek/deepseek_v4.pdf#page=29"]]
+      },
+      {
+        id: "v4-04", module: "v4", topic: "Generative Reward Model", level: "必会", origin: "论文精读＋补充",
+        question: "V4 的 Generative Reward Model（GRM）与传统 scalar RM 有什么不同？",
+        answer: "传统 RM 把轨迹压成单个标量；V4 对难验证任务构造 rubric-guided RL 数据，让生成式模型通过推理进行评价，并直接优化这一生成式 judge。论文强调 actor 自身原生承担 GRM 角色，使生成与评估能力共同优化。",
+        sections: [
+          ["动机", "开放写作、复杂规划等 hard-to-verify 任务难用编译器/答案规则；训练独立 scalar RM 又需要大量人类偏好且容易学习表面捷径。"],
+          ["GRM", ["输入 prompt、轨迹与 rubric。", "生成检查理由/判定而非只输出孤立分数。", "利用模型自身推理把评估标准泛化到复杂任务。"]],
+          ["论文表述的特殊点", "V4 不沿用常规独立 scalar-based RM，而是让 actor network 兼具生成者与评价者能力，并对 GRM 本身应用 RL 优化。可理解为把‘会做’与‘会判断’放进同一模型能力中。"],
+          ["风险", "自评可能自洽偏置、共同盲点或奖励自欺，需要客观 anchors、rubric 校准、异构 judges、人工审计与 adversarial evaluation。"]
+        ],
+        traps: ["不要无证据地把 GRM 等同于一个具体公开算法或简单‘让模型打 1–10 分’；论文这里强调 generative judging 与 joint optimization。"],
+        followups: ["为什么 rubric 能降低开放任务评价歧义？", "actor 与 judge 同体会带来哪些共模失败？"],
+        sources: [["V4 论文 GRM", "../industry_reports/deepseek/deepseek_v4.pdf#page=29"], ["Reward Model", "../common_knowledge/16_reward_model.md"]]
+      },
+      {
+        id: "v4-05", module: "v4", topic: "Tool Schema", level: "高频", origin: "论文精读",
+        question: "V4 为什么引入带 DMSL 特殊 token 的 XML 风格 tool-call schema？",
+        answer: "它用专用 DMSL token 划定工具调用块，并用 XML 风格结构表达多次调用与参数；相较纯 JSON 文本，论文称这种格式能减少 escaping failure 与工具调用错误，并与 thinking 标签明确协同。",
+        sections: [
+          ["结构", ["一个专用起止块包裹 tool calls。", "每个 invoke 指定工具名。", "参数声明 name、string 类型标记与值。", "支持连续多个工具调用。"]],
+          ["思考协议", "thinking mode 开启时，必须在工具调用或最终回答之前完成 think 区间；非 thinking 则在结束标记后直接调用工具或给答案。"],
+          ["训练含义", "schema 必须作为特殊 token/模板进入 SFT 和 RL 轨迹；执行器、parser、训练数据与推理服务要使用同一协议，否则结构正确率会骤降。"]
+        ],
+        traps: ["XML 不是天然比 JSON 安全；优势来自特定 token、parser 与训练协议的共同设计。", "工具参数仍需运行时 schema 校验，模型格式正确不等于调用安全。"],
+        followups: ["为什么字符串参数与 JSON 类型参数要区分？", "tool schema 变化时如何向后兼容旧 checkpoint？"],
+        sources: [["V4 论文 Table 4", "../industry_reports/deepseek/deepseek_v4.pdf#page=30"]]
+      },
+      {
+        id: "v4-06", module: "v4", topic: "Interleaved Thinking", level: "必会", origin: "论文精读",
+        question: "V4 相比 V3.2 如何改变 interleaved thinking 的上下文保留策略？",
+        answer: "工具调用场景中，V4 跨所有 tool-result round 乃至 user-message 边界保留完整 reasoning history，以支持长程 agent 任务；普通无工具对话仍沿用新 user message 到来时丢弃旧 reasoning 的策略。",
+        sections: [
+          ["V3.2", "tool result 到来时保留思考，但新 user message 会清空此前 reasoning；这在复杂 agent workflow 中会迫使模型重新构建问题状态。"],
+          ["V4 工具路径", "完整保留所有轮次的 reasoning、tool call 与 tool result，形成累计、连贯的长 horizon chain。百万 token context 为此提供容量基础。"],
+          ["V4 普通对话路径", "新 user message 到来仍清除旧 reasoning，让上下文更简洁，因为普通聊天中持续隐藏推理的收益有限。"],
+          ["协议陷阱", "若框架用 user role 模拟工具 observation，可能不会进入专用 tool-call context path，论文建议此类架构使用 non-think。"]
+        ],
+        traps: ["V4 不是所有聊天无条件永久保留所有 thinking；它根据是否为工具场景分流。"],
+        followups: ["完整保留 reasoning 的成本与隐私风险是什么？", "工具 observation 用错 role 为什么改变上下文策略？"],
+        sources: [["V4 论文 Figure 7", "../industry_reports/deepseek/deepseek_v4.pdf#page=31"], ["V3.2 笔记", "../industry_reports/deepseek/deepseek_v32_reading_notes.md"]]
+      },
+      {
+        id: "v4-07", module: "v4", topic: "Quick Instruction", level: "高频", origin: "论文精读",
+        question: "V4 的 Quick Instruction 解决什么延迟问题？",
+        answer: "搜索触发、意图/领域识别、标题和 query 生成等辅助任务若由独立小模型执行，会重复 prefill；V4 把专用任务 token 直接附加到已有输入，复用已计算 KV，并允许多个辅助任务并行，从而降低 TTFT 和系统维护成本。",
+        sections: [
+          ["支持任务", ["是否需要 web search。", "会话标题生成。", "搜索 query 生成。", "来源权威性与领域分类。", "提取 URL 并判断是否读取。"]],
+          ["为什么更快", "输入前缀完全相同，主模型已有 KV cache；只需从不同专用 token 继续短 decode，而不必为每个小模型重新 tokenize、prefill 和维护权重。"],
+          ["并行", "不同 auxiliary token 对应独立短任务，可共享 prefix 后并行 decode，特别适合用户感知的首 token 前决策。"]
+        ],
+        traps: ["Quick Instruction 不是普通自然语言 prompt 技巧，而是训练过的专用 token 与格式协议。", "辅助任务准确率仍需单独评测，低延迟不能牺牲错误搜索触发。"],
+        followups: ["为什么共享 prefix 可以复用 KV？", "如何避免多个辅助任务相互看到彼此输出？"],
+        sources: [["V4 论文 Table 5", "../industry_reports/deepseek/deepseek_v4.pdf#page=32"]]
+      },
+      {
+        id: "v4-08", module: "v4", topic: "OPD 定义", level: "必会", origin: "论文精读＋已有",
+        question: "V4 的 multi-teacher On‑Policy Distillation 目标函数是什么？",
+        answer: "在 student 自己采样的轨迹状态上，最小化学生分布到多个相关 expert 分布的加权 reverse KL；任务上下文决定哪些教师有效，教师权重反映其相对重要性。",
+        formula: "L_OPD(θ)=Σ_{i=1}^N w_i · D_KL(π_θ || π_Ei)\n轨迹 y ~ π_θ；教师在学生前缀 (x,y_<t) 上给出 logits。",
+        sections: [
+          ["训练循环", ["学生对当前 prompt rollout。", "路由到相关领域教师。", "教师对学生每个前缀计算全词表分布。", "对各教师 reverse-KL 加权并更新学生。"]],
+          ["多教师", "论文使用超过十个覆盖不同领域的 teacher；不是把权重直接 merge，而是在输出分布层面对齐到统一参数空间。"],
+          ["上下文选择", "理想情况下数学 prompt 主要由数学 expert 指导、代码由代码 expert 指导；若所有教师对所有样本无差别平均，会产生冲突与能力稀释。"]
+        ],
+        traps: ["公式是多个 KL 的加权和，不等同于先简单平均教师 logits 后做一次 KL，除非满足特定定义与归一化。"],
+        followups: ["教师权重如何影响冲突 mode？", "为什么学生必须自己生成轨迹才叫 on-policy？"],
+        sources: [["V4 论文 Eq.29", "../industry_reports/deepseek/deepseek_v4.pdf#page=32"], ["OPD 笔记", "../common_knowledge/21_on_policy_distillation.md"]]
+      },
+      {
+        id: "v4-09", module: "v4", topic: "On-policy", level: "必会", origin: "论文精读＋补充",
+        question: "OPD 的“on-policy”究竟体现在哪里？教师是否负责生成轨迹？",
+        answer: "轨迹前缀由当前 student 采样，教师只在这些学生实际访问到的状态上提供分布；因此教师不负责决定状态分布，避免学生只在教师完美轨迹上学习。",
+        sections: [
+          ["与离线蒸馏", "离线蒸馏保存 teacher 生成的固定 trajectories，学生训练时看到的前缀大多来自教师；部署后学生自己的错误前缀可能从未出现。"],
+          ["OPD", "学生生成 token，下一步 teacher 接收同一个学生前缀并输出完整 logits；即使学生早期偏离，仍能得到如何从该状态继续的密集指导。"],
+          ["工程近似", "rollout 与更新之间仍有 policy lag；训练系统要控制版本、量化和并行差异。‘on-policy’是目标状态分布，不代表工程上绝对零偏差。"]
+        ],
+        traps: ["教师在学生轨迹上打分不意味着教师同意整个轨迹；它只提供当前位置的条件分布。"],
+        followups: ["如果 student 进入 teacher 从未见过的极端状态会怎样？", "OPD 与 DAgger 的共同思想是什么？"],
+        sources: [["V4 论文 §5.1.2", "../industry_reports/deepseek/deepseek_v4.pdf#page=33"], ["OPD 笔记", "../common_knowledge/21_on_policy_distillation.md"]]
+      },
+      {
+        id: "v4-10", module: "v4", topic: "Reverse KL", level: "必会", origin: "已有＋补充",
+        question: "为什么 V4 OPD 使用 D_KL(student || teacher)？reverse KL 的梯度直觉是什么？",
+        answer: "reverse KL 的期望在 student 分布上计算，天然匹配学生 rollout；它强烈惩罚学生把概率放在教师认为极低的区域，并倾向选择教师高概率 mode，适合把专家策略压进一个统一学生。",
+        formula: "D_KL(p||q)=Σ_a p(a)[log p(a)-log q(a)]\n这里 p=student，q=teacher。",
+        sections: [
+          ["mode-seeking", "当 teacher 有多个相距很远的 mode、student 容量有限时，reverse KL 倾向集中在可覆盖的高概率 mode，而非为覆盖所有 mode 把概率摊到二者之间。"],
+          ["on-policy 匹配", "期望由 p=student 加权，可直接在学生采样状态/动作附近估计；教师为这些状态提供密集分布。"],
+          ["风险", "过强 mode-seeking 可能降低多样性、忽略 teacher 的低概率但有价值 mode；多教师冲突和 teacher 零概率区域会带来尖锐梯度，需要温度、权重与数值稳定处理。"]
+        ],
+        traps: ["‘reverse KL 永远更好’错误；forward KL 更偏覆盖 teacher modes，在需要多样性时可能更合适。", "token 级 KL 方向与轨迹级分布行为有关，不能只靠一句 mode-seeking 解释所有结果。"],
+        followups: ["forward KL 为什么称 mean/mode-covering？", "教师 temperature 会如何改变蒸馏信号？"],
+        sources: [["OPD 提纲", "ch13_opd.md"], ["GKD 笔记", "../common_knowledge/23_gkd.md"]]
+      },
+      {
+        id: "v4-11", module: "v4", topic: "Full-vocabulary", level: "必会", origin: "论文精读＋补充",
+        question: "V4 为什么坚持 full‑vocabulary logit distillation，而不是只用采样 token 的 log-ratio 估计？",
+        answer: "只在采样 token 上用 stop-gradient log-ratio 作为优势虽能复用 RL 框架且省资源，但梯度方差高、训练不稳；V4 保留每个位置的完整教师/学生词表分布，精确计算 reverse KL，得到更稳定且更忠实的教师信号。",
+        sections: [
+          ["采样估计", "早期方法可把 sg[log π_teacher(y_t)/π_student(y_t)] 当 per-token advantage，只需当前采样 token 的概率；它是 Monte Carlo 风格的稀疏估计。"],
+          ["Full vocabulary", "对词表所有 token 计算 p_student(a) 与 p_teacher(a)，不仅告诉学生‘选中 token 怎样’，还告诉它各替代 token 的相对概率，包含 dark knowledge。"],
+          ["代价", "词表超过 100K、十余教师时，显式存所有 logits 极其昂贵；因此 V4 专门设计 teacher scheduling、hidden-state cache 与定制 KL kernel。"]
+        ],
+        traps: ["full-vocab 是每个训练位置的词表分布，不是让教师枚举生成所有可能序列。"],
+        followups: ["什么是蒸馏中的 dark knowledge？", "为什么只存 teacher hidden state 比存 logits 省？"],
+        sources: [["V4 论文 §5.1.2", "../industry_reports/deepseek/deepseek_v4.pdf#page=33"]]
+      },
+      {
+        id: "v4-12", module: "v4", topic: "OPD vs 其他合并", level: "必会", origin: "论文精读＋补充",
+        question: "OPD 为什么比 weight merging、hard SFT distillation 或 mixed RL 更适合 V4 的多专家统一？",
+        answer: "weight merge 在参数空间直接平均，专家路径不同会互相抵消；hard SFT 只学单条教师轨迹且有暴露偏差；mixed RL 信号稀疏、不同领域奖励相互干扰。OPD 在学生状态上用 token 级完整分布对齐，既密集又保持统一部署分布。",
+        sections: [
+          ["Weight merging", "假设专家处在可线性组合的同一 basin；即使同 base 微调，独立 RL 也可能沿不同参数方向移动，直接平均会掉点。"],
+          ["Hard distillation", "只有选中的 token 是 one-hot 目标，丢失教师对备选 token 的相对偏好；学生偏离教师轨迹后无指导。"],
+          ["Mixed RL", "数学 0/1、写作 judge、agent success 等 reward scale 和长度完全不同；序列级信号稀疏，统一优化容易负迁移。"],
+          ["OPD", "统一学生始终在自己的部署分布上学习，相关专家提供密集 token 分布，可通过 teacher weights 控制各域贡献。"]
+        ],
+        traps: ["OPD 仍可能产生教师冲突、计算昂贵和能力折中，不是无损合并定理。"],
+        followups: ["同 base 初始化为何仍不能保证 weight average 有效？", "OPD 如何处理教师在同一 prompt 上意见相反？"],
+        sources: [["V4 论文 §5.1.2", "../industry_reports/deepseek/deepseek_v4.pdf#page=33"], ["OPD 提纲", "ch13_opd.md"]]
+      },
+      {
+        id: "v4-13", module: "v4", topic: "FP4 QAT", level: "高频", origin: "论文精读",
+        question: "V4 为什么在后训练阶段做 FP4 QAT？具体量化哪些组件？",
+        answer: "为让最终部署与 rollout 原生使用 FP4并降低权重/内存流量，V4 在后训练中加入 QAT，使模型适应量化误差；主要量化 MoE expert weights，以及 CSA indexer 的 QK 路径，并把 index scores 从 FP32 降到 BF16。",
+        sections: [
+          ["MoE 权重", "FP32 master weights 量化到 FP4，再反量化到 FP8 做计算；反向梯度通过 STE 传回 master weights，避免维护单独的转置量化权重。"],
+          ["CSA indexer", "QK activations 以 FP4 cache/load/multiply，降低长上下文 attention selector 的流量；index score BF16 让 top‑k selector 获得约 2× 加速，同时报告较高 KV-entry recall。"],
+          ["训练—部署一致", "RL rollout 直接使用 native FP4，不用模拟量化，这使采样行为与线上部署一致，同时减少 kernel memory loading。"]
+        ],
+        traps: ["QAT 不是训练完再简单 PTQ；它在训练中显式让模型适应量化。", "不是所有模型参数和计算都无差别 FP4，论文点名了特定组件与高精度路径。"],
+        followups: ["STE 为什么需要？", "FP4→FP8 反量化在什么条件下可无损承载 scale 范围？"],
+        sources: [["V4 论文 §5.2.1", "../industry_reports/deepseek/deepseek_v4.pdf#page=33"]]
+      },
+      {
+        id: "v4-14", module: "v4", topic: "Teacher Scheduling", level: "必会", origin: "论文精读",
+        question: "V4 如何让十余个超大教师的 full‑vocab OPD 在工程上可行？",
+        answer: "教师权重集中存储并按需加载，以 ZeRO-like 分片减轻 I/O/DRAM；前向只缓存最后一层 hidden states，不落盘巨大 logits；训练时按 teacher 排序 mini-batch，一次只驻留一个 prediction head，并异步加载，最后用定制 kernel 计算精确 KL。",
+        sections: [
+          ["为什么不存 logits", "词表 |V|>100K，若为每个 token、每个教师显式 materialize logits，存储与传输不可承受；hidden dimension 通常远小于词表维。"],
+          ["重建", "取缓存 teacher hidden state，通过相应 teacher prediction head 在线重建完整 logits；额外 head GEMM 比全 logits I/O 更便宜。"],
+          ["调度", ["样本按 teacher index 排序。", "一个 mini-batch 只需一个 distinct teacher head。", "权重/head/hidden state 异步 load/offload，与关键计算重叠。", "TileLang kernel 直接算 student—teacher KL，减少动态内存分配。"]]
+        ],
+        traps: ["‘unbounded teachers’是框架扩展能力描述，不代表真实训练同时无限教师；论文实际提到超过十个。"],
+        followups: ["hidden state cache 的大小与 sequence length 如何关系？", "prediction head 为何成为按 teacher 调度的关键？"],
+        sources: [["V4 论文 §5.2.2", "../industry_reports/deepseek/deepseek_v4.pdf#page=34"]]
+      },
+      {
+        id: "v4-15", module: "v4", topic: "容错 Rollout", level: "必会", origin: "论文精读＋补充",
+        question: "V4 的 preemptible rollout service 为什么要保存 token‑granular WAL 与 KV cache？",
+        answer: "大规模集群任务会被抢占或故障；每生成一个 token 就写 WAL，并在抢占时保存未完成请求 KV，恢复后可无缝续解码。若每次从头重生成，会让长回答更容易被中断并重试，造成训练数据长度偏差。",
+        sections: [
+          ["正常恢复", "WAL 记录已生成 token，KV cache 保存解码状态；resume 后无需重新 prefill 和随机重采样。"],
+          ["致命故障", "若 KV 丢失，可用 WAL 中已生成 token 重新执行 prefill 重建 KV，然后继续；虽然更贵，但保持同一轨迹前缀。"],
+          ["长度偏差", "中断发生时短序列更可能已经完成并被保留，长序列更常从头丢失/重采；训练集会系统性偏短，这不是单纯吞吐损失，而是统计分布错误。"],
+          ["替代条件", "若推理 stack batch-invariant 且 deterministic，可用一致随机种子重生成，但仍需重复 decode，效率不如 token WAL。"]
+        ],
+        traps: ["只保存 prompt 和 seed 不一定能确定性重放：batching、kernel、并行与浮点差异都可能改变采样。"],
+        followups: ["为什么 WAL 必须 token 粒度？", "长度偏差会怎样影响 reasoning effort 与 reward？"],
+        sources: [["V4 论文 §5.2.3", "../industry_reports/deepseek/deepseek_v4.pdf#page=34"]]
+      },
+      {
+        id: "v4-16", module: "v4", topic: "百万 Token RL", level: "必会", origin: "论文精读",
+        question: "V4 如何扩展 RL/OPD 到 million‑token sequences？",
+        answer: "rollout 用可抢占容错服务；训练侧把 rollout 数据拆成轻量 metadata 与重型 per-token fields，metadata 全量加载用于全局 shuffle/packing，token 字段通过共享内存按 mini-batch 细粒度加载并消费即释放，动态决定设备上的 mini-batch 数以平衡吞吐和 I/O。",
+        sections: [
+          ["为什么拆分", "百万 token 轨迹的 token ids、logprobs、masks、advantages/teacher states 等很重，但样本边界、长度、teacher、reward 等 metadata 较小。布局计算只需 metadata，无需把所有 token 字段复制进每个进程。"],
+          ["数据路径", ["全局读取 metadata，完成 shuffle 与 packing layout。", "重字段经 shared-memory loader 在节点内共享。", "mini-batch 用完立即释放，降低 CPU/GPU 峰值。", "按 workload 动态设 on-device mini-batch，重叠计算与 I/O。"]],
+          ["系统目标", "避免 intra-node data redundancy，把内存压力从‘整批百万 token 常驻’变成‘按需小块流式处理’。"]
+        ],
+        traps: ["支持 1M context 不等于每条 RL 样本都正好 1M；系统必须高效处理高度变长的轨迹。"],
+        followups: ["为什么 packing layout 只需 metadata？", "长序列对 advantage/logprob 存储提出什么压力？"],
+        sources: [["V4 论文 §5.2.4", "../industry_reports/deepseek/deepseek_v4.pdf#page=35"]]
+      },
+      {
+        id: "v4-17", module: "v4", topic: "DSec Sandbox", level: "高频", origin: "论文精读",
+        question: "V4 的 DeepSeek Elastic Compute（DSec）为什么需要四种执行底座？",
+        answer: "agent 任务从轻量无状态函数到需要强隔离的完整 OS，冷启动、兼容性、安全和密度需求不同；DSec 统一 API 下提供 Function Call、Container、microVM 与 fullVM，根据任务选择合适隔离成本。",
+        sections: [
+          ["四种底座", ["Function Call：预热容器池中的无状态调用，冷启动最低。", "Container：Docker 兼容，适合一般软件工程任务。", "microVM：基于 Firecracker，提供 VM 级隔离和高密度。", "fullVM：基于 QEMU，支持任意 guest OS，兼容性最大、开销更高。"]],
+          ["统一接口", "command execution、file transfer、TTY 等暴露为共同 API，切换底座只改参数，便于同一 agent harness 横向扩展。"],
+          ["规模", "论文称单个 DSec cluster 可管理数十万并发 sandbox；底层 API gateway、per-host agent 与 cluster monitor 运行在 3FS 上。"]
+        ],
+        traps: ["sandbox 不只是安全隔离，也决定启动延迟、环境兼容、并发密度与可复现性。"],
+        followups: ["什么任务需要 microVM 而不是 container？", "为什么 RL 环境生命周期要与 GPU 调度协同？"],
+        sources: [["V4 论文 §5.2.5", "../industry_reports/deepseek/deepseek_v4.pdf#page=35"]]
+      },
+      {
+        id: "v4-18", module: "v4", topic: "环境存储与恢复", level: "进阶", origin: "论文精读",
+        question: "DSec 如何解决大量环境镜像、并发密度与可重放问题？",
+        answer: "镜像采用 3FS 支撑的分层按需加载，容器用 EROFS、microVM 用 overlaybd 与本地 COW；通过 page-cache 去重、内存回收和降低 runtime contention 提升密度；每个 sandbox 维护全序 trajectory log，支持抢占恢复、溯源和确定性重放。",
+        sections: [
+          ["快速镜像", "只把元数据预置本地，数据块按需从 3FS 拉取；只读 base layer 跨实例共享，写入落本地 copy-on-write layer，快照可链式版本化并毫秒级恢复。"],
+          ["密度", "共享/去重虚拟化环境的 page cache，做内存回收；减少 runtime 与 spinlock 争用，降低每 sandbox CPU overhead。"],
+          ["Trajectory log", ["Client fast-forward：恢复时复用已完成命令结果，避免非幂等操作重执行。", "Fine-grained provenance：每次状态变化的来源与结果可追踪。", "Deterministic replay：从日志重放历史会话。"]]
+        ],
+        traps: ["可重放不仅为了 debug，也直接保障 RL 轨迹的统计正确性与故障恢复。", "非幂等命令不能在恢复时盲目重执行。"],
+        followups: ["copy-on-write 如何节省镜像启动成本？", "client fast-forward 与 token WAL 的共同设计思想是什么？"],
+        sources: [["V4 论文 §5.2.5", "../industry_reports/deepseek/deepseek_v4.pdf#page=36"]]
+      },
+      {
+        id: "v4-19", module: "v4", topic: "评测解读", level: "高频", origin: "论文精读＋校正",
+        question: "V4 评测最值得记住的结论是什么？为什么不能只背榜单？",
+        answer: "V4‑Pro‑Max 在开放模型的知识、推理、代码和部分 agent 任务上达到新高，Max 常在最难任务优于 High；1M 检索在 128K 后逐步退化但 1M 仍有竞争力。更重要的是评测强依赖 reasoning effort、上下文、工具次数、prompt 与 proprietary harness。",
+        sections: [
+          ["Reasoning", "Pro‑Max 在 LiveCodeBench、Codeforces、数学竞赛等表现强；Max 使用更长上下文与更弱长度惩罚，最难任务收益明显。"],
+          ["Agent", "SWE/Terminal/Search/MCP 等结果显示强工具泛化，但不同 benchmark 的 harness、最大步数（可达 500）和上下文（可达 512K）必须一起报告。"],
+          ["1M Context", "MRCR 曲线在 8K–128K 相对稳定，256K 后更明显下降；‘支持 1M’不代表 1M 与短上下文同等可靠。"],
+          ["真实任务", "论文另建中文写作、搜索、白领任务与内部代码 agent 指标，强调标准 benchmark 与真实用户体验存在差距。"]
+        ],
+        traps: ["论文是 preview model 报告，部分对手 API 缺失/繁忙、部分 harness proprietary；不要把单表排名当绝对能力结论。"],
+        followups: ["为什么 reasoning effort 比较必须控制 token budget？", "长上下文 retrieval 与真实长文 reasoning 有什么差别？"],
+        sources: [["V4 论文 §5.3–5.4", "../industry_reports/deepseek/deepseek_v4.pdf#page=36"]]
+      },
+      {
+        id: "v4-20", module: "v4", topic: "V4 核心洞察", level: "必会", origin: "论文精读＋补充",
+        question: "如果面试官只给 90 秒，如何总结 V4 后训练的真正创新？",
+        answer: "V4 把后训练拆成‘领域内稀疏奖励探索’与‘领域间密集分布融合’：各 specialist 用 fine-tuning＋GRPO 练到上限，统一学生再在自身轨迹上用十余教师 full-vocab reverse-KL 做 OPD；同时用 FP4 QAT、教师按需调度、WAL 容错、百万 token 数据流与 DSec 沙箱把该范式规模化。",
+        sections: [
+          ["算法层", ["领域 RL 负责发现和强化高回报策略。", "OPD 负责把多个专家以密集 token 监督合入一个模型。", "三档 reasoning effort 把性能—token 成本变成显式产品旋钮。", "GRM 扩展 hard-to-verify 任务的奖励能力。"]],
+          ["交互层", ["DMSL/XML tool schema。", "工具场景完整保留 interleaved thinking。", "Quick Instruction 复用 KV 完成低延迟辅助判断。"]],
+          ["系统层", ["FP4 QAT 保持 rollout/部署一致。", "full-vocab teacher 调度避免 logits I/O 爆炸。", "token WAL 与 sandbox trajectory log 保证抢占安全和数据无偏。", "百万 token 流式数据与 DSec 支撑长 horizon agent RL。"]],
+          ["一句判断", "V4 的价值不只是 OPD 公式，而是把多专家能力融合、长上下文、agent 环境与可部署数值格式做成一条端到端后训练系统。"]
+        ],
+        traps: ["只讲 OPD 而完全不讲基础设施，会漏掉论文第 5 章近一半的关键贡献。", "只背 benchmark 数字不能回答‘为什么 V4 的范式能 scale’。"],
+        followups: ["V4 pipeline 中哪里是稀疏监督，哪里是密集监督？", "如果去掉 full-vocab teacher infrastructure，OPD 会退化成什么？"],
+        sources: [["V4 论文第 5 章", "../industry_reports/deepseek/deepseek_v4.pdf#page=28"], ["OPD 提纲", "ch13_opd.md"]]
+      }
+    ];
+
+    const STORAGE_KEY = "sft-deepseek-review-v1";
+    const SIDEBAR_KEY = "sft-deepseek-sidebar-collapsed";
+    const state = loadState();
+    state.statuses = state.statuses || {};
+    state.notes = state.notes || {};
+    let selectedModule = "all";
+    let selectedFilter = "all";
+    let searchTerm = "";
+    let currentId = state.lastId || questions[0]?.id;
+    let revealed = false;
+
+    const els = {
+      moduleNav: document.querySelector("#moduleNav"),
+      mobileModule: document.querySelector("#mobileModule"),
+      stats: document.querySelector("#stats"),
+      search: document.querySelector("#search"),
+      resultCount: document.querySelector("#resultCount"),
+      studyCard: document.querySelector("#study-card"),
+      questionList: document.querySelector("#questionList"),
+      toast: document.querySelector("#toast")
+    };
+
+    function loadSidebarPreference() {
+      try {
+        return localStorage.getItem(SIDEBAR_KEY) === "true";
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function setSidebarCollapsed(collapsed) {
+      const shell = document.querySelector("#appShell");
+      const sidebar = document.querySelector("#studySidebar");
+      const button = document.querySelector("#toggleSidebarBtn");
+      const label = document.querySelector("#sidebarToggleLabel");
+      shell.classList.toggle("sidebar-collapsed", collapsed);
+      sidebar.setAttribute("aria-hidden", String(collapsed));
+      button.setAttribute("aria-expanded", String(!collapsed));
+      button.title = collapsed ? "展开目录（快捷键：[）" : "收起目录（快捷键：[）";
+      label.textContent = collapsed ? "展开目录" : "收起目录";
+      try {
+        localStorage.setItem(SIDEBAR_KEY, String(collapsed));
+      } catch (_) {
+        // 目录开关在当前会话仍然有效。
+      }
+    }
+
+    function toggleSidebar() {
+      setSidebarCollapsed(!document.querySelector("#appShell").classList.contains("sidebar-collapsed"));
+    }
+
+    function loadState() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { statuses: {}, notes: {}, lastId: null };
+      } catch (_) {
+        return { statuses: {}, notes: {}, lastId: null };
+      }
+    }
+
+    function saveState() {
+      state.lastId = currentId;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (_) {
+        // 某些浏览器会限制 file:// 页面的持久化；当前会话仍可使用，并可手动导出进度。
+      }
+    }
+
+    function statusOf(id) { return state.statuses[id] || "unseen"; }
+
+    function filteredQuestions() {
+      const needle = searchTerm.trim().toLowerCase();
+      return questions.filter(q => {
+        if (selectedModule !== "all" && q.module !== selectedModule) return false;
+        if (selectedFilter !== "all" && statusOf(q.id) !== selectedFilter) return false;
+        if (!needle) return true;
+        const haystack = [q.question, q.answer, q.topic, q.level, q.origin, ...(q.sections || []).flat(), ...(q.traps || []), ...(q.followups || [])].join(" ").toLowerCase();
+        return haystack.includes(needle);
+      });
+    }
+
+    function list(items, ordered = false) {
+      if (!items?.length) return "";
+      const tag = ordered ? "ol" : "ul";
+      return `<${tag}>${items.map(item => `<li>${item}</li>`).join("")}</${tag}>`;
+    }
+
+    function renderModules() {
+      els.moduleNav.innerHTML = Object.entries(MODULES).map(([key, meta]) => {
+        const scoped = key === "all" ? questions : questions.filter(q => q.module === key);
+        const mastered = scoped.filter(q => statusOf(q.id) === "mastered").length;
+        const pct = scoped.length ? Math.round(mastered / scoped.length * 100) : 0;
+        return `<button class="module-btn ${selectedModule === key ? "active" : ""}" data-module="${key}" type="button">
+          <span class="module-row"><span>${meta.title}</span><span>${mastered}/${scoped.length}</span></span>
+          <span class="module-meta">掌握 ${pct}%</span>
+          <span class="mini-track"><span style="width:${pct}%"></span></span>
+        </button>`;
+      }).join("");
+      els.mobileModule.innerHTML = Object.entries(MODULES).map(([key, meta]) => `<option value="${key}" ${selectedModule === key ? "selected" : ""}>${meta.title}</option>`).join("");
+    }
+
+    function renderStats() {
+      const counts = { weak: 0, fuzzy: 0, mastered: 0 };
+      questions.forEach(q => { const s = statusOf(q.id); if (counts[s] !== undefined) counts[s] += 1; });
+      const reviewed = counts.weak + counts.fuzzy + counts.mastered;
+      els.stats.innerHTML = `
+        <div class="stat"><b>${questions.length}</b><span>总题数</span></div>
+        <div class="stat"><b>${reviewed}</b><span>已复习</span></div>
+        <div class="stat"><b>${counts.mastered}</b><span>已掌握</span></div>
+        <div class="stat"><b>${counts.weak + counts.fuzzy}</b><span>待攻克</span></div>`;
+    }
+
+    function ensureCurrentVisible(items) {
+      if (!items.length) return;
+      if (!items.some(q => q.id === currentId)) currentId = items[0].id;
+    }
+
+    function renderCard(items) {
+      if (!items.length) {
+        els.studyCard.innerHTML = `<div class="empty">没有符合当前筛选条件的题目。试试切换模块或清空搜索。</div>`;
+        return;
+      }
+      ensureCurrentVisible(items);
+      const q = questions.find(item => item.id === currentId);
+      const scopedIndex = items.findIndex(item => item.id === currentId) + 1;
+      const status = statusOf(q.id);
+      const sections = (q.sections || []).map(([title, content]) => `<div class="answer-section"><h3>${title}</h3>${Array.isArray(content) ? list(content) : `<p>${content}</p>`}</div>`).join("");
+      const formula = q.formula ? `<div class="formula">${q.formula}</div>` : "";
+      const traps = q.traps?.length ? `<div class="answer-section"><h3>易错点与边界</h3>${list(q.traps.map(x => `<span class="trap">${x}</span>`))}</div>` : "";
+      const followups = q.followups?.length ? `<div class="answer-section"><h3>自检追问</h3>${list(q.followups, true)}</div>` : "";
+      const sources = q.sources?.length ? `<div class="answer-section"><h3>对应本地材料</h3><div class="source-links">${q.sources.map(([label, href]) => `<a href="${href}">${label}</a>`).join("")}</div></div>` : "";
+      els.studyCard.innerHTML = `
+        <div class="focus-head">
+          <div class="badges">
+            <span class="badge module">${MODULES[q.module].title}</span>
+            <span class="badge level">${q.level}</span>
+            <span class="badge origin">${q.origin}</span>
+            <span class="question-index">筛选结果 ${scopedIndex}/${items.length} · 编号 ${q.id}</span>
+          </div>
+          <h2 class="question-title">${q.question}</h2>
+        </div>
+        <div class="answer-pad">
+          <label for="selfAnswer"><span>先写关键词或口述，再揭晓答案</span><span>自动保存在本机</span></label>
+          <textarea id="selfAnswer" placeholder="我的答案……">${escapeText(state.notes[q.id] || "")}</textarea>
+        </div>
+        <div class="focus-actions">
+          <button class="primary-btn" id="revealBtn" type="button">${revealed ? "收起答案" : "揭晓答案"} <kbd>Space</kbd></button>
+          <button class="soft-btn" id="copyBtn" type="button">复制标准答案</button>
+        </div>
+        <div class="answer-content" ${revealed ? "" : "hidden"}>
+          <div class="one-line"><strong>面试版：</strong>${q.answer}</div>
+          ${formula}${sections}${traps}${followups}${sources}
+        </div>
+        <div class="rating">
+          <span class="rating-label">根据“能否脱稿回答 + 能否处理追问”标记本题</span>
+          <button class="status-btn ${status === "weak" ? "selected" : ""}" data-status="weak" type="button">1 · 不会</button>
+          <button class="status-btn ${status === "fuzzy" ? "selected" : ""}" data-status="fuzzy" type="button">2 · 模糊</button>
+          <button class="status-btn ${status === "mastered" ? "selected" : ""}" data-status="mastered" type="button">3 · 掌握</button>
+        </div>`;
+
+      document.querySelector("#selfAnswer")?.addEventListener("input", event => {
+        state.notes[q.id] = event.target.value;
+        saveState();
+      });
+      document.querySelector("#revealBtn")?.addEventListener("click", () => { revealed = !revealed; renderCard(filteredQuestions()); });
+      document.querySelector("#copyBtn")?.addEventListener("click", () => copyAnswer(q));
+      document.querySelectorAll(".status-btn").forEach(btn => btn.addEventListener("click", () => setStatus(q.id, btn.dataset.status)));
+    }
+
+    function escapeText(value) {
+      return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    async function copyAnswer(q) {
+      const text = [q.question, q.answer, ...(q.sections || []).map(([title, content]) => `${title}\n${Array.isArray(content) ? content.join("\n") : content}`), ...(q.traps || []).map(x => `易错：${x}`)].join("\n\n");
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const helper = document.createElement("textarea");
+          helper.value = text;
+          helper.style.position = "fixed";
+          helper.style.opacity = "0";
+          document.body.appendChild(helper);
+          helper.select();
+          document.execCommand("copy");
+          helper.remove();
+        }
+        showToast("标准答案已复制");
+      } catch (_) {
+        showToast("复制失败，请手动选择答案");
+      }
+    }
+
+    function exportProgress() {
+      const payload = {
+        format: "sft-deepseek-review-progress",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        questionCount: questions.length,
+        state: {
+          statuses: state.statuses || {},
+          notes: state.notes || {},
+          lastId: currentId
+        }
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = `sft-deepseek-progress-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 0);
+      showToast("学习进度已导出");
+    }
+
+    async function importProgress(file) {
+      try {
+        const payload = JSON.parse(await file.text());
+        const incoming = payload?.state || payload;
+        if (!incoming || typeof incoming !== "object" || typeof incoming.statuses !== "object" || typeof incoming.notes !== "object") {
+          throw new Error("invalid progress format");
+        }
+        const validIds = new Set(questions.map(q => q.id));
+        const validStatuses = new Set(["weak", "fuzzy", "mastered"]);
+        const importedStatuses = Object.fromEntries(
+          Object.entries(incoming.statuses).filter(([id, value]) => validIds.has(id) && validStatuses.has(value))
+        );
+        const importedNotes = Object.fromEntries(
+          Object.entries(incoming.notes).filter(([id, value]) => validIds.has(id) && typeof value === "string")
+        );
+        state.statuses = { ...(state.statuses || {}), ...importedStatuses };
+        state.notes = { ...(state.notes || {}), ...importedNotes };
+        if (validIds.has(incoming.lastId)) currentId = incoming.lastId;
+        saveState();
+        renderAll(false);
+        showToast(`已导入 ${Object.keys(importedStatuses).length} 道题的进度`);
+      } catch (_) {
+        showToast("进度文件无效或已损坏");
+      }
+    }
+
+    function setStatus(id, status) {
+      state.statuses[id] = status;
+      saveState();
+      renderAll(false);
+      showToast(status === "mastered" ? "已标记为掌握" : status === "fuzzy" ? "已加入模糊题" : "已加入薄弱题");
+    }
+
+    function renderQuestionList(items) {
+      els.resultCount.textContent = `${items.length} 道题`;
+      if (!items.length) { els.questionList.innerHTML = ""; return; }
+      els.questionList.innerHTML = items.map((q, idx) => `<button class="question-jump ${q.id === currentId ? "active" : ""}" data-id="${q.id}" type="button">
+        <span class="q-num">${String(idx + 1).padStart(2, "0")}</span>
+        <span class="q-copy"><b>${q.question}</b><small>${q.topic} · ${q.level} · ${q.origin}</small></span>
+        <span class="q-state ${statusOf(q.id)}" title="${statusOf(q.id)}"></span>
+      </button>`).join("");
+      document.querySelectorAll(".question-jump").forEach(btn => btn.addEventListener("click", () => selectQuestion(btn.dataset.id, true)));
+    }
+
+    function selectQuestion(id, scroll = false) {
+      currentId = id;
+      revealed = false;
+      saveState();
+      renderAll(false);
+      if (scroll) els.studyCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function move(delta) {
+      const items = filteredQuestions();
+      if (!items.length) return;
+      const idx = Math.max(0, items.findIndex(q => q.id === currentId));
+      selectQuestion(items[(idx + delta + items.length) % items.length].id, true);
+    }
+
+    function randomWeak() {
+      const pool = filteredQuestions().filter(q => statusOf(q.id) !== "mastered");
+      const source = pool.length ? pool : filteredQuestions();
+      if (!source.length) return;
+      selectQuestion(source[Math.floor(Math.random() * source.length)].id, true);
+    }
+
+    function renderAll(resetReveal = true) {
+      if (resetReveal) revealed = false;
+      const items = filteredQuestions();
+      ensureCurrentVisible(items);
+      renderModules();
+      renderStats();
+      renderCard(items);
+      renderQuestionList(items);
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => els.toast.classList.remove("show"), 1600);
+    }
+
+    els.moduleNav.addEventListener("click", event => {
+      const btn = event.target.closest("[data-module]");
+      if (!btn) return;
+      selectedModule = btn.dataset.module;
+      renderAll();
+    });
+    els.mobileModule.addEventListener("change", event => { selectedModule = event.target.value; renderAll(); });
+    els.search.addEventListener("input", event => { searchTerm = event.target.value; renderAll(); });
+    document.querySelectorAll(".filter-btn").forEach(btn => btn.addEventListener("click", () => {
+      selectedFilter = btn.dataset.filter;
+      document.querySelectorAll(".filter-btn").forEach(item => item.classList.toggle("active", item === btn));
+      renderAll();
+    }));
+    document.querySelector("#prevBtn").addEventListener("click", () => move(-1));
+    document.querySelector("#nextBtn").addEventListener("click", () => move(1));
+    document.querySelector("#randomBtn").addEventListener("click", randomWeak);
+    document.querySelector("#toggleSidebarBtn").addEventListener("click", toggleSidebar);
+    document.querySelector("#exportBtn").addEventListener("click", exportProgress);
+    document.querySelector("#importBtn").addEventListener("click", () => document.querySelector("#progressFile").click());
+    document.querySelector("#progressFile").addEventListener("change", event => {
+      const file = event.target.files?.[0];
+      if (file) importProgress(file);
+      event.target.value = "";
+    });
+    document.querySelector("#resetBtn").addEventListener("click", () => {
+      if (!confirm("确定清空所有掌握状态和个人答案吗？")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state.statuses = {}; state.notes = {}; state.lastId = questions[0]?.id; currentId = state.lastId;
+      renderAll(); showToast("进度已重置");
+    });
+    document.querySelector("#shortcutsBtn").addEventListener("click", () => alert("快捷键：/ 搜索 · [ 收起/展开目录 · Space 揭晓/收起 · J 下一题 · K 上一题 · 1 不会 · 2 模糊 · 3 掌握"));
+    document.addEventListener("keydown", event => {
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+      if (event.key === "/" && !typing) { event.preventDefault(); els.search.focus(); return; }
+      if (typing) return;
+      if (event.key === "[") toggleSidebar();
+      if (event.code === "Space") { event.preventDefault(); revealed = !revealed; renderCard(filteredQuestions()); }
+      if (event.key.toLowerCase() === "j") move(1);
+      if (event.key.toLowerCase() === "k") move(-1);
+      if (["1", "2", "3"].includes(event.key) && currentId) setStatus(currentId, { "1": "weak", "2": "fuzzy", "3": "mastered" }[event.key]);
+    });
+
+    setSidebarCollapsed(loadSidebarPreference());
+    renderAll(false);
+  </script>
+</body>
+</html>

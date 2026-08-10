@@ -23,6 +23,7 @@ GRPO 的洞察：既然奖励模型本就是在「**同一问题、不同回答�
 
 ### 1. 采样与基线
 
+
 对每个问题 $q$，从旧策略 $\pi_{\theta_{old}}$ 采样一组 $G$ 个输出 $\{o_1, \dots, o_G\}$，奖励模型打分得 $\mathbf{r} = \{r_1, \dots, r_G\}$。**用这组奖励的均值/标准差做归一化**，作为优势：
 
 $$\hat{A}_{i,t} = \tilde{r}_i = \frac{r_i - \mathrm{mean}(\mathbf{r})}{\mathrm{std}(\mathbf{r})}$$
