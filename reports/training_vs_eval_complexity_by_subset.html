@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>训练数据与 Eval 难度分布：按 23 个子集</title>
+<style>
+:root{--ink:#18212b;--muted:#65717d;--line:#dce3e8;--paper:#f5f7f9;--blue:#246da8;--green:#177451;--amber:#a86308;--red:#a63d36;--navy:#132c40}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font:14px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}header{padding:48px max(24px,calc((100vw - 1480px)/2));background:linear-gradient(125deg,#10293d,#28526d);color:#fff}header h1{font-size:37px;margin:6px 0 10px}header p{max-width:1050px;margin:0;color:#d5e2ea}.eyebrow{font-size:12px;letter-spacing:.12em;color:#a9c8db}
+main{max-width:1480px;margin:auto;padding:28px 22px 78px}h2{margin:38px 0 10px;font-size:25px}h3{font-size:18px}p{margin:8px 0}.lead{border-left:5px solid var(--blue);background:#edf6fc;padding:17px 19px;font-size:16px}.warning{border-left-color:var(--amber);background:#fff6e9}.note{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin:18px 0}.card{border:1px solid var(--line);border-radius:11px;padding:16px}.card b{display:block;font-size:27px;line-height:1.2}.card span{color:var(--muted)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:11px;max-height:760px;margin:12px 0 22px}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th,td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:right;vertical-align:top}th{position:sticky;top:0;z-index:2;background:#edf2f6;color:#43515e}th:first-child,td:first-child,th.name,td.name{text-align:left}tr:hover{background:#f7fbfe}tr.missing{background:#f5f5f5;color:#8b949c}
+.tag{display:inline-block;color:white;border-radius:99px;padding:3px 7px;font-size:10px}.tag.hard{background:var(--red)}.tag.warn{background:var(--amber)}.tag.ok{background:var(--green)}.missing-tag{background:#89939c}
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{border:1px solid var(--line);border-radius:12px;padding:18px}.panel h3{margin-top:0}.metric{display:grid;grid-template-columns:150px 1fr 90px;gap:9px;align-items:center;margin:11px 0}.track{height:12px;background:#e7ebee;border-radius:99px;overflow:hidden}.fill{height:100%;background:var(--blue)}.ratio{font-weight:700}
+code{background:#eef1f3;padding:2px 5px;border-radius:4px}ul{padding-left:21px}.footer{border-top:1px solid var(--line);margin-top:38px;padding-top:17px;color:var(--muted);font-size:12px}
+@media(max-width:900px){.cards{grid-template-columns:1fr 1fr}.comparison{grid-template-columns:1fr}header h1{font-size:29px}}
+</style></head><body>
+<header><div class="eyebrow">TRAINING DIFFICULTY AUDIT · 2026-08-18</div><h1>训练数据是否比 Eval 简单</h1><p>分析对象是实际入库的 15,644 条 Kimi Medium SFT，而不是 Max 小样本。所有统计按 <code>target_subset</code> 对齐到23个eval子集；Reasoning长度使用 Unicode 字符数。</p></header>
+<main><div class="lead"><b>结论：</b>“合成数据偏简单”得到较强支持，但不是仅凭reasoning短就下结论。控制训练集的subset配比后，训练reasoning均值只有测试Kimi全量均值的 <b>32%</b>、测试Kimi正确样本均值的 <b>42%</b>；同时Requirement的DFS深度只有eval的 <b>62%</b>，BFS宽度只有 <b>78%</b>。训练模板的Step节点并不少，但跨步骤搜索和同级分支选择更浅。</div>
+
+<div class="cards"><div class="card"><b>15644</b><span>实际训练条数</span></div><div class="card"><b>17 / 23</b><span>覆盖eval子集</span></div><div class="card"><b>1,630</b><span>训练reasoning均值</span></div><div class="card"><b>5,057</b><span>同配比测试Kimi均值</span></div><div class="card"><b>3,855</b><span>同配比测试Kimi正确均值</span></div></div>
+
+<h2>1. Reasoning Content长度：按Eval子集</h2>
+<p class="note">“测试全部”反映真实运行分布；“测试正确”排除Kimi在失败时的超长循环，更适合与只保留ok的训练SFT比较。均值是主指标，同时保留P25/P50/P75/P90查看分布形状。</p>
+<div class="table-wrap"><table><thead><tr><th>Subset</th><th class="name">名称</th><th>Eval n</th><th>训练场景</th><th>训练行</th>
+<th>测试全部<br>均值</th><th>测试P25</th><th>测试P50</th><th>测试P75</th><th>测试P90</th><th>测试正确n</th><th>测试正确<br>均值</th>
+<th>训练<br>均值</th><th>训练P25</th><th>训练P50</th><th>训练P75</th><th>训练P90</th><th>训练/测试全部</th><th>训练/测试正确</th><th>判断</th></tr></thead><tbody><tr class="missing"><td><b>01</b></td><td class="name">要素提取专家v1</td>
+<td>20</td><td>0</td><td>0</td>
+<td>39,149</td><td>11,916</td><td>39,715</td><td>59,790</td><td>75,491</td>
+<td>1</td><td>9,962</td>
+<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>02</b></td><td class="name">意图识别分析师</td>
+<td>20</td><td>3</td><td>289</td>
+<td>13,494</td><td>6,290</td><td>9,622</td><td>18,138</td><td>27,201</td>
+<td>5</td><td>6,958</td>
+<td>2,456</td><td>609</td><td>1,375</td><td>3,164</td><td>5,496</td>
+<td>18%</td><td>35%</td><td><span class="tag hard">显著更短</span></td></tr><tr class="missing"><td><b>03</b></td><td class="name">用户怒了检测</td>
+<td>20</td><td>0</td><td>0</td>
+<td>32,170</td><td>18,570</td><td>33,104</td><td>36,796</td><td>58,990</td>
+<td>5</td><td>23,824</td>
+<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>04</b></td><td class="name">要素提取专家v2</td>
+<td>21</td><td>1</td><td>106</td>
+<td>26,829</td><td>14,178</td><td>20,046</td><td>38,833</td><td>52,894</td>
+<td>4</td><td>25,424</td>
+<td>2,617</td><td>634</td><td>1,285</td><td>2,862</td><td>6,934</td>
+<td>10%</td><td>10%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>05</b></td><td class="name">分析用户的投诉倾向</td>
+<td>20</td><td>2</td><td>273</td>
+<td>7,204</td><td>2,174</td><td>3,718</td><td>5,459</td><td>10,954</td>
+<td>11</td><td>3,399</td>
+<td>1,159</td><td>220</td><td>835</td><td>1,576</td><td>2,594</td>
+<td>16%</td><td>34%</td><td><span class="tag hard">显著更短</span></td></tr><tr class="missing"><td><b>06</b></td><td class="name">EZ浣熊食堂的招商经理</td>
+<td>10</td><td>0</td><td>0</td>
+<td>2,496</td><td>591</td><td>760</td><td>957</td><td>4,385</td>
+<td>8</td><td>999</td>
+<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>07</b></td><td class="name">意图识别-函数回复</td>
+<td>20</td><td>11</td><td>1342</td>
+<td>2,551</td><td>908</td><td>1,334</td><td>3,170</td><td>5,657</td>
+<td>13</td><td>2,766</td>
+<td>1,068</td><td>299</td><td>492</td><td>1,221</td><td>2,434</td>
+<td>42%</td><td>39%</td><td><span class="tag hard">显著更短</span></td></tr><tr class="missing"><td><b>08</b></td><td class="name">词性分类</td>
+<td>20</td><td>0</td><td>0</td>
+<td>4,754</td><td>1,812</td><td>3,724</td><td>6,104</td><td>8,936</td>
+<td>16</td><td>4,796</td>
+<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>09</b></td><td class="name">景区团购智能助手v1</td>
+<td>25</td><td>16</td><td>1380</td>
+<td>6,019</td><td>1,738</td><td>3,917</td><td>6,742</td><td>11,588</td>
+<td>15</td><td>3,826</td>
+<td>2,361</td><td>408</td><td>994</td><td>2,920</td><td>5,769</td>
+<td>39%</td><td>62%</td><td><span class="tag warn">偏短</span></td></tr><tr class=""><td><b>10</b></td><td class="name">神抢手套餐招商</td>
+<td>10</td><td>14</td><td>1956</td>
+<td>3,908</td><td>1,952</td><td>3,542</td><td>5,024</td><td>6,973</td>
+<td>9</td><td>3,916</td>
+<td>1,152</td><td>276</td><td>756</td><td>1,629</td><td>2,590</td>
+<td>29%</td><td>29%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>11</b></td><td class="name">客服回复是否包含风险内容</td>
+<td>12</td><td>2</td><td>239</td>
+<td>15,798</td><td>9,480</td><td>14,488</td><td>20,956</td><td>27,396</td>
+<td>0</td><td>—</td>
+<td>2,023</td><td>542</td><td>1,105</td><td>2,450</td><td>4,439</td>
+<td>13%</td><td>—</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>12</b></td><td class="name">麻子烧烤电话接待员v2</td>
+<td>20</td><td>1</td><td>142</td>
+<td>5,125</td><td>2,580</td><td>4,228</td><td>6,478</td><td>10,701</td>
+<td>17</td><td>5,068</td>
+<td>1,070</td><td>200</td><td>410</td><td>1,242</td><td>2,160</td>
+<td>21%</td><td>21%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>13</b></td><td class="name">动线机器人</td>
+<td>20</td><td>2</td><td>191</td>
+<td>31,886</td><td>18,334</td><td>32,898</td><td>47,148</td><td>49,352</td>
+<td>2</td><td>15,762</td>
+<td>5,181</td><td>3,003</td><td>4,522</td><td>6,326</td><td>10,148</td>
+<td>16%</td><td>33%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>14</b></td><td class="name">BFS客服服务评分专家</td>
+<td>10</td><td>1</td><td>71</td>
+<td>23,816</td><td>18,491</td><td>24,510</td><td>31,422</td><td>35,553</td>
+<td>1</td><td>18,423</td>
+<td>3,552</td><td>1,358</td><td>2,557</td><td>5,158</td><td>7,840</td>
+<td>15%</td><td>19%</td><td><span class="tag hard">显著更短</span></td></tr><tr class="missing"><td><b>15</b></td><td class="name">帮忙解放房型</td>
+<td>10</td><td>0</td><td>0</td>
+<td>13,463</td><td>5,638</td><td>13,511</td><td>20,899</td><td>24,633</td>
+<td>3</td><td>7,880</td>
+<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>16</b></td><td class="name">大众点评客服回访场景</td>
+<td>10</td><td>1</td><td>134</td>
+<td>5,533</td><td>3,512</td><td>4,480</td><td>5,643</td><td>8,496</td>
+<td>1</td><td>5,892</td>
+<td>1,788</td><td>372</td><td>1,270</td><td>2,310</td><td>3,040</td>
+<td>32%</td><td>30%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>17</b></td><td class="name">智能客服助理</td>
+<td>20</td><td>44</td><td>5820</td>
+<td>2,366</td><td>1,311</td><td>1,688</td><td>2,812</td><td>4,053</td>
+<td>18</td><td>2,040</td>
+<td>1,388</td><td>291</td><td>766</td><td>1,862</td><td>3,228</td>
+<td>59%</td><td>68%</td><td><span class="tag warn">偏短</span></td></tr><tr class=""><td><b>18</b></td><td class="name">金融客服服务场景10</td>
+<td>10</td><td>5</td><td>604</td>
+<td>2,451</td><td>1,096</td><td>1,756</td><td>3,959</td><td>4,538</td>
+<td>2</td><td>4,391</td>
+<td>947</td><td>193</td><td>386</td><td>1,106</td><td>2,334</td>
+<td>39%</td><td>22%</td><td><span class="tag hard">显著更短</span></td></tr><tr class="missing"><td><b>19</b></td><td class="name">判断团单是否相同</td>
+<td>12</td><td>0</td><td>0</td>
+<td>19,901</td><td>5,658</td><td>8,828</td><td>27,864</td><td>47,679</td>
+<td>3</td><td>15,587</td>
+<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>20</b></td><td class="name">设计最佳流量投放日期</td>
+<td>25</td><td>1</td><td>90</td>
+<td>29,608</td><td>15,661</td><td>25,037</td><td>38,120</td><td>55,009</td>
+<td>2</td><td>11,764</td>
+<td>5,405</td><td>3,686</td><td>4,676</td><td>6,296</td><td>8,874</td>
+<td>18%</td><td>46%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>21</b></td><td class="name">电话来访安排上门时间</td>
+<td>25</td><td>10</td><td>1331</td>
+<td>4,257</td><td>2,214</td><td>3,783</td><td>5,968</td><td>7,528</td>
+<td>14</td><td>3,814</td>
+<td>1,663</td><td>530</td><td>1,351</td><td>2,264</td><td>3,328</td>
+<td>39%</td><td>44%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>22</b></td><td class="name">团团开外卖发票</td>
+<td>20</td><td>16</td><td>1534</td>
+<td>8,864</td><td>4,896</td><td>8,080</td><td>12,114</td><td>13,467</td>
+<td>6</td><td>6,425</td>
+<td>2,363</td><td>740</td><td>1,740</td><td>3,091</td><td>4,814</td>
+<td>27%</td><td>37%</td><td><span class="tag hard">显著更短</span></td></tr><tr class=""><td><b>23</b></td><td class="name">麻子烧烤电话接待员v1</td>
+<td>20</td><td>1</td><td>142</td>
+<td>5,847</td><td>1,745</td><td>3,494</td><td>7,356</td><td>14,004</td>
+<td>16</td><td>5,313</td>
+<td>1,066</td><td>276</td><td>760</td><td>1,449</td><td>2,221</td>
+<td>18%</td><td>20%</td><td><span class="tag hard">显著更短</span></td></tr></tbody></table></div>
+<div class="lead warning">已覆盖的17个subset中，训练reasoning均值在<b>全部17个</b>都低于测试Kimi全量均值；有正确样本可比较的16个subset中，<b>16/16</b>低于测试正确均值，而且<b>14/16</b>不足测试正确均值的一半。这不是某一个subset拉低均值，而是系统性分布偏移。</div>
+
+<h2>2. Requirement复杂程度：按Eval子集</h2>
+<p class="note">Eval每个subset只有一份固定Requirement。训练侧“字符P25/P50/P75”按不同物理场景等权，表示模板分布；训练均值、BFS、DFS、Step和条件数按实际训练行数加权，表示模型真正看到的训练暴露。</p>
+<div class="table-wrap"><table><thead><tr><th>Subset</th><th class="name">名称</th><th>Eval字符</th><th>Eval BFS</th><th>Eval DFS</th><th>Eval Step</th><th>Eval条件</th><th>训练场景</th>
+<th>训练字符<br>行加权均值</th><th>场景P25</th><th>场景P50</th><th>场景P75</th><th>训练BFS</th><th>训练DFS</th><th>训练Step</th><th>训练条件</th><th>字符比</th><th>BFS比</th><th>DFS比</th><th>判断</th></tr></thead><tbody><tr class="missing"><td><b>01</b></td><td class="name">要素提取专家v1</td>
+<td>3,079</td><td>12</td><td>6</td><td>0</td><td>31</td>
+<td>0</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>02</b></td><td class="name">意图识别分析师</td>
+<td>7,808</td><td>12</td><td>4</td><td>3</td><td>24</td>
+<td>3</td><td>6,247</td><td>5,896</td><td>6,413</td><td>6,564</td>
+<td>14.4</td><td>3.5</td><td>3.0</td><td>12.6</td>
+<td>80%</td><td>120%</td><td>88%</td><td><span class="tag ok">接近或更复杂</span></td></tr><tr class="missing"><td><b>03</b></td><td class="name">用户怒了检测</td>
+<td>4,332</td><td>1</td><td>6</td><td>0</td><td>20</td>
+<td>0</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>04</b></td><td class="name">要素提取专家v2</td>
+<td>4,088</td><td>30</td><td>5</td><td>0</td><td>21</td>
+<td>1</td><td>2,845</td><td>2,845</td><td>2,845</td><td>2,845</td>
+<td>4.0</td><td>4.0</td><td>0.0</td><td>18.0</td>
+<td>70%</td><td>13%</td><td>80%</td><td><span class="tag hard">结构更简单</span></td></tr><tr class=""><td><b>05</b></td><td class="name">分析用户的投诉倾向</td>
+<td>2,830</td><td>15</td><td>5</td><td>4</td><td>12</td>
+<td>2</td><td>2,058</td><td>2,020</td><td>2,060</td><td>2,101</td>
+<td>5.5</td><td>2.5</td><td>12.3</td><td>11.9</td>
+<td>73%</td><td>37%</td><td>50%</td><td><span class="tag hard">结构更简单</span></td></tr><tr class="missing"><td><b>06</b></td><td class="name">EZ浣熊食堂的招商经理</td>
+<td>4,474</td><td>1</td><td>6</td><td>38</td><td>17</td>
+<td>0</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>07</b></td><td class="name">意图识别-函数回复</td>
+<td>4,439</td><td>6</td><td>3</td><td>0</td><td>17</td>
+<td>11</td><td>3,841</td><td>3,388</td><td>3,963</td><td>4,116</td>
+<td>2.7</td><td>5.7</td><td>0.0</td><td>21.2</td>
+<td>87%</td><td>46%</td><td>191%</td><td><span class="tag warn">部分更简单</span></td></tr><tr class="missing"><td><b>08</b></td><td class="name">词性分类</td>
+<td>4,543</td><td>14</td><td>3</td><td>0</td><td>9</td>
+<td>0</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>09</b></td><td class="name">景区团购智能助手v1</td>
+<td>9,120</td><td>10</td><td>9</td><td>50</td><td>73</td>
+<td>16</td><td>6,924</td><td>6,302</td><td>6,495</td><td>7,440</td>
+<td>7.3</td><td>2.8</td><td>56.4</td><td>59.8</td>
+<td>76%</td><td>73%</td><td>31%</td><td><span class="tag hard">结构更简单</span></td></tr><tr class=""><td><b>10</b></td><td class="name">神抢手套餐招商</td>
+<td>9,013</td><td>18</td><td>8</td><td>24</td><td>142</td>
+<td>14</td><td>8,594</td><td>8,566</td><td>8,794</td><td>8,960</td>
+<td>11.2</td><td>5.5</td><td>23.5</td><td>111.9</td>
+<td>95%</td><td>62%</td><td>69%</td><td><span class="tag hard">结构更简单</span></td></tr><tr class=""><td><b>11</b></td><td class="name">客服回复是否包含风险内容</td>
+<td>3,911</td><td>6</td><td>5</td><td>0</td><td>11</td>
+<td>2</td><td>2,907</td><td>2,841</td><td>2,909</td><td>2,977</td>
+<td>5.0</td><td>5.5</td><td>0.0</td><td>14.0</td>
+<td>74%</td><td>83%</td><td>110%</td><td><span class="tag warn">部分更简单</span></td></tr><tr class=""><td><b>12</b></td><td class="name">麻子烧烤电话接待员v2</td>
+<td>7,932</td><td>4</td><td>5</td><td>7</td><td>117</td>
+<td>1</td><td>6,479</td><td>6,479</td><td>6,479</td><td>6,479</td>
+<td>10.0</td><td>9.0</td><td>19.0</td><td>86.0</td>
+<td>82%</td><td>250%</td><td>180%</td><td><span class="tag ok">接近或更复杂</span></td></tr><tr class=""><td><b>13</b></td><td class="name">动线机器人</td>
+<td>3,892</td><td>22</td><td>4</td><td>0</td><td>34</td>
+<td>2</td><td>3,337</td><td>3,334</td><td>3,336</td><td>3,338</td>
+<td>11.2</td><td>5.4</td><td>0.0</td><td>44.5</td>
+<td>86%</td><td>51%</td><td>136%</td><td><span class="tag warn">部分更简单</span></td></tr><tr class=""><td><b>14</b></td><td class="name">BFS客服服务评分专家</td>
+<td>1,999</td><td>6</td><td>2</td><td>0</td><td>1</td>
+<td>1</td><td>2,280</td><td>2,280</td><td>2,280</td><td>2,280</td>
+<td>20.0</td><td>3.0</td><td>0.0</td><td>6.0</td>
+<td>114%</td><td>333%</td><td>150%</td><td><span class="tag ok">接近或更复杂</span></td></tr><tr class="missing"><td><b>15</b></td><td class="name">帮忙解放房型</td>
+<td>4,675</td><td>15</td><td>2</td><td>31</td><td>42</td>
+<td>0</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>16</b></td><td class="name">大众点评客服回访场景</td>
+<td>5,900</td><td>18</td><td>9</td><td>54</td><td>73</td>
+<td>1</td><td>5,185</td><td>5,185</td><td>5,185</td><td>5,185</td>
+<td>13.0</td><td>4.0</td><td>69.0</td><td>72.0</td>
+<td>88%</td><td>72%</td><td>44%</td><td><span class="tag hard">结构更简单</span></td></tr><tr class=""><td><b>17</b></td><td class="name">智能客服助理</td>
+<td>7,076</td><td>16</td><td>7</td><td>56</td><td>52</td>
+<td>44</td><td>6,280</td><td>5,593</td><td>6,283</td><td>6,810</td>
+<td>11.5</td><td>3.4</td><td>51.5</td><td>45.7</td>
+<td>89%</td><td>72%</td><td>48%</td><td><span class="tag hard">结构更简单</span></td></tr><tr class=""><td><b>18</b></td><td class="name">金融客服服务场景10</td>
+<td>4,759</td><td>1</td><td>6</td><td>25</td><td>20</td>
+<td>5</td><td>4,554</td><td>4,512</td><td>4,550</td><td>4,571</td>
+<td>2.2</td><td>3.4</td><td>34.5</td><td>19.9</td>
+<td>96%</td><td>216%</td><td>56%</td><td><span class="tag warn">部分更简单</span></td></tr><tr class="missing"><td><b>19</b></td><td class="name">判断团单是否相同</td>
+<td>3,751</td><td>58</td><td>4</td><td>0</td><td>21</td>
+<td>0</td><td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td>—</td>
+<td>—</td><td>—</td><td>—</td><td><span class="tag missing-tag">未覆盖</span></td></tr><tr class=""><td><b>20</b></td><td class="name">设计最佳流量投放日期</td>
+<td>548</td><td>6</td><td>2</td><td>0</td><td>3</td>
+<td>1</td><td>622</td><td>622</td><td>622</td><td>622</td>
+<td>3.0</td><td>2.0</td><td>0.0</td><td>3.0</td>
+<td>114%</td><td>50%</td><td>100%</td><td><span class="tag warn">部分更简单</span></td></tr><tr class=""><td><b>21</b></td><td class="name">电话来访安排上门时间</td>
+<td>5,914</td><td>8</td><td>7</td><td>17</td><td>77</td>
+<td>10</td><td>6,710</td><td>6,706</td><td>6,768</td><td>6,794</td>
+<td>6.5</td><td>4.5</td><td>17.0</td><td>62.5</td>
+<td>113%</td><td>81%</td><td>65%</td><td><span class="tag warn">部分更简单</span></td></tr><tr class=""><td><b>22</b></td><td class="name">团团开外卖发票</td>
+<td>5,607</td><td>10</td><td>6</td><td>0</td><td>61</td>
+<td>16</td><td>4,813</td><td>4,260</td><td>4,478</td><td>4,799</td>
+<td>18.0</td><td>4.5</td><td>1.6</td><td>32.8</td>
+<td>86%</td><td>180%</td><td>75%</td><td><span class="tag warn">部分更简单</span></td></tr><tr class=""><td><b>23</b></td><td class="name">麻子烧烤电话接待员v1</td>
+<td>6,177</td><td>10</td><td>3</td><td>5</td><td>97</td>
+<td>1</td><td>5,071</td><td>5,071</td><td>5,071</td><td>5,071</td>
+<td>1.0</td><td>2.0</td><td>48.0</td><td>61.0</td>
+<td>82%</td><td>10%</td><td>67%</td><td><span class="tag hard">结构更简单</span></td></tr></tbody></table></div>
+
+<h2>3. 控制Subset配比后的总体难度</h2>
+<p>下面把每个eval Requirement按训练集中相应subset/场景实际行数重新加权，避免“训练数据在subset17更多”造成不公平比较。</p>
+<div class="comparison"><section class="panel"><h3>Reasoning推理负担</h3>
+<div class="metric"><span>测试Kimi全部</span><div class="track"><div class="fill" style="width:100%"></div></div><b>5,057</b></div>
+<div class="metric"><span>测试Kimi正确</span><div class="track"><div class="fill" style="width:76.2%"></div></div><b>3,855</b></div>
+<div class="metric"><span>训练SFT</span><div class="track"><div class="fill" style="width:32.2%"></div></div><b>1,630</b></div>
+<p>训练reasoning均值仅为同配比测试全部的32%、测试正确的42%。由于训练和测试endpoint不同，该指标不能单独证明题目简单，但差距非常大。</p></section>
+<section class="panel"><h3>Requirement结构负担</h3><div class="metric"><span>Requirement字符</span><div class="track"><div class="fill" style="width:89.4%"></div></div><b>89%</b></div><div class="metric"><span>BFS宽度</span><div class="track"><div class="fill" style="width:77.9%"></div></div><b>78%</b></div><div class="metric"><span>DFS深度</span><div class="track"><div class="fill" style="width:62.2%"></div></div><b>62%</b></div><div class="metric"><span>Step节点</span><div class="track"><div class="fill" style="width:100.0%"></div></div><b>100%</b></div><div class="metric"><span>条件数量</span><div class="track"><div class="fill" style="width:81.4%"></div></div><b>81%</b></div></section></div>
+
+<h2>4. 为什么这可能导致训练无明显提升</h2>
+<ul><li><b>训练目标主要在复述显式分支，而不是学习搜索：</b>Step节点数与eval几乎相同（100%），但DFS只有62%、BFS只有78%。规则写得很长，不代表在线决策困难。</li>
+<li><b>Answer-first降低了条件熵：</b>先确定target answer，再反向构造支持该答案的Input。主线被要求唯一可判定，即使有干扰，也通常不需要多轮回溯。</li>
+<li><b>覆盖不足且严重失衡：</b>缺失subset为1、3、6、8、15、19；训练量最大的6个subset占85.4%，其中subset17单独占37.2%。模型可能主要强化已有易分支，而没有补到eval最难机制。</li>
+<li><b>映射不是同题复刻：</b>target_subset是最近机制映射，不保证hard gate、输入信号和跨字段约束与eval一致。因此同一行中的比较是诊断代理，不是严格配对实验。</li>
+<li><b>Reasoning短也可能是风格差异：</b>测试来自<code>k3sopmaze1-ckpt_-1</code>，训练数据由多个Kimi网关生成。真正支持“简单”的证据是reasoning差距与BFS/DFS差距同时存在。</li></ul>
+
+<h2>5. 下一轮数据应如何改</h2>
+<ul><li>先补缺失的6个subset机制，并按eval子集设定配额，避免subset17继续占37%以上。</li><li>生成时对每条样本显式控制：候选分支数、有效干扰数、历史状态覆盖、跨字段约束数和最短决策链长度；不要用“多写几句”代替难度。</li><li>建立困难canary：固定同一批Input分别让基础模型与训练后模型作答，主要看严格答案准确率；reasoning长度只作为解释变量。</li><li>做受控消融：相同subset、相同模型和相同样本数下，对比清晰Input与多分支Input，才能确认收益来自难度而不是数量。</li></ul>
+
+<div class="footer">口径：训练集为当前SFT中全部status=ok记录；测试集为bench_json中的完整Kimi 400条。BFS宽度是Requirement决策图最大直接子节点数；DFS深度优先取显式Step跳转最长路径，无跳转时使用层级/条件嵌套回退。HTML完全自包含，不依赖外部文件或网络。</div></main></body></html>

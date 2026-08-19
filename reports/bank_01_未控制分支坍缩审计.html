@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>bank_01 未控制分支坍缩审计</title>
+<style>
+:root{--ink:#162033;--muted:#667085;--line:#e5e9f0;--paper:#fff;--bg:#f4f7fb;--blue:#3157d5;--cyan:#08a4bd;--amber:#f2a51a;--red:#d64545;--green:#17845b}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.55}
+.hero{background:linear-gradient(130deg,#172554,#263d8f 58%,#087e93);color:#fff;padding:48px 6vw 44px}.hero-inner,.page{max-width:1180px;margin:auto}.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.78}.hero h1{font-size:34px;margin:8px 0 10px}.hero p{max-width:850px;margin:0;color:#dce8ff}.page{padding:28px 22px 64px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 7px 24px rgba(19,36,72,.06)}.card{padding:18px}.metric{font-size:30px;font-weight:750}.label{font-size:13px;color:var(--muted)}.bad{color:var(--red)}.warn{color:#bd7300}.good{color:var(--green)}
+.panel{margin-top:18px;padding:22px}.panel h2{margin:0 0 6px;font-size:21px}.sub{color:var(--muted);font-size:14px;margin:0 0 18px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.bar-row{display:grid;grid-template-columns:92px 1fr 92px;align-items:center;gap:10px;margin:10px 0}.bar-label{font-size:13px}.bar-track{height:13px;background:#edf1f7;border-radius:9px;overflow:hidden}.bar-fill{height:100%;border-radius:9px}.bar-value{text-align:right;font-weight:650;font-size:13px}.bar-value span{color:var(--muted);font-weight:400}
+.callout{border-left:5px solid var(--red);background:#fff5f5;padding:16px 18px;border-radius:8px;margin:18px 0}.callout strong{display:block;margin-bottom:5px}.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:10px;margin-top:16px}.node{padding:15px;border:1px solid var(--line);border-radius:10px;background:#fafcff;text-align:center}.arrow{color:var(--blue);font-size:22px}.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#eaf0ff;color:#2647ad;font-size:12px;font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{position:sticky;top:0;background:#f8faff;color:#48546a;z-index:1}.table-wrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:10px}.wrap{max-width:530px;white-space:pre-wrap;word-break:break-word}.controls{display:flex;gap:10px;margin:12px 0}.controls input,.controls select{border:1px solid #ccd4e0;border-radius:8px;padding:8px 10px;background:#fff}.controls input{flex:1}.small{font-size:12px;color:var(--muted)}
+.decision{display:grid;grid-template-columns:1fr 1fr;gap:14px}.decision>div{padding:16px;border-radius:10px}.keep{background:#effaf5;border:1px solid #bfe7d4}.change{background:#fff7e8;border:1px solid #f4d59a}.footer{margin-top:24px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:850px){.grid{grid-template-columns:1fr 1fr}.two,.decision{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-inner"><div class="eyebrow">ANSWER-FIRST INPUT SYNTHESIS · BASELINE AUDIT</div><h1>bank_01 未控制分支坍缩审计</h1><p>本报告冻结于 enum 软目标尚未接入生成流程时，即不做分支配额、覆盖后处理或 enum 引导。它回答一个核心问题：自由生成的 Input 虽然文字不重复，是否真正覆盖了不同 SOP 分支？</p></div></header>
+<main class="page">
+<section class="grid">
+<div class="card"><div class="label">编号文件</div><div class="metric">100</div><div class="small">001.json—100.json</div></div>
+<div class="card"><div class="label">成功样本</div><div class="metric good">54</div><div class="small">失败 46 条</div></div>
+<div class="card"><div class="label">覆盖 Step</div><div class="metric bad">5 / 24</div><div class="small">仅覆盖 20.8%</div></div>
+<div class="card"><div class="label">Step 5.2 + 3.1</div><div class="metric bad">49</div><div class="small">占成功样本 90.7%</div></div>
+</section>
+
+<section class="panel"><h2>执行状态</h2><p class="sub">失败主要反映并发限流，不参与分支多样性计算。</p><div class="two"><div><div class="bar-row"><div class="bar-label">ok</div><div class="bar-track"><div class="bar-fill" style="width:100.00%;background:var(--blue)"></div></div><div class="bar-value">54 <span>54.0%</span></div></div><div class="bar-row"><div class="bar-label">error</div><div class="bar-track"><div class="bar-fill" style="width:85.19%;background:var(--blue)"></div></div><div class="bar-value">46 <span>46.0%</span></div></div></div><div><div class="callout"><strong>运行风险：429 限流</strong>错误文件中有 46 条为 HTTP 429。高并发会降低补齐效率，但它与语义分支坍缩是两个独立问题。</div><p class="small">报告只使用 status=ok 的样本计算 Step、Answer 和 Input 相似度。</p></div></div></section>
+
+<section class="panel"><h2>业务分支分布</h2><p class="sub">54 条成功样本只触达 5 个 Step；Step 5.2 与 3.1 占绝大多数。</p><div class="two"><div><div class="bar-row"><div class="bar-label">5.2</div><div class="bar-track"><div class="bar-fill" style="width:100.00%;background:var(--red)"></div></div><div class="bar-value">35 <span>64.8%</span></div></div><div class="bar-row"><div class="bar-label">3.1</div><div class="bar-track"><div class="bar-fill" style="width:40.00%;background:var(--red)"></div></div><div class="bar-value">14 <span>25.9%</span></div></div><div class="bar-row"><div class="bar-label">5.1</div><div class="bar-track"><div class="bar-fill" style="width:5.71%;background:var(--red)"></div></div><div class="bar-value">2 <span>3.7%</span></div></div><div class="bar-row"><div class="bar-label">4.1</div><div class="bar-track"><div class="bar-fill" style="width:5.71%;background:var(--red)"></div></div><div class="bar-value">2 <span>3.7%</span></div></div><div class="bar-row"><div class="bar-label">3.2</div><div class="bar-track"><div class="bar-fill" style="width:2.86%;background:var(--red)"></div></div><div class="bar-value">1 <span>1.9%</span></div></div></div><div><div class="callout"><strong>核心结论：存在严重语义分支坍缩</strong>文本表面有变化，但模型持续选择最容易反向构造的“查询结果”和“待补件”路径。</div><div class="flow"><div class="node">自由选择 Answer</div><div class="arrow">→</div><div class="node">偏向易构造分支</div><div class="arrow">→</div><div class="node">Input 语义同质化</div></div></div></div></section>
+
+<section class="panel"><h2>附属字段分布</h2><p class="sub">所有成功样本均为 moveon，rate_source 也高度集中。</p><div class="two"><div><h3>action</h3><div class="bar-row"><div class="bar-label">moveon</div><div class="bar-track"><div class="bar-fill" style="width:100.00%;background:var(--amber)"></div></div><div class="bar-value">54 <span>100.0%</span></div></div></div><div><h3>rate_source</h3><div class="bar-row"><div class="bar-label">客服+客户</div><div class="bar-track"><div class="bar-fill" style="width:100.00%;background:var(--cyan)"></div></div><div class="bar-value">51 <span>94.4%</span></div></div><div class="bar-row"><div class="bar-label">客户</div><div class="bar-track"><div class="bar-fill" style="width:5.88%;background:var(--cyan)"></div></div><div class="bar-value">3 <span>5.6%</span></div></div></div></div></section>
+
+<section class="panel"><h2>表面文本多样性</h2><p class="sub">没有精确重复或高相似对，因此仅靠文本去重无法识别当前问题。</p><section class="grid">
+<div class="card"><div class="label">唯一 Input</div><div class="metric good">54 / 54</div></div>
+<div class="card"><div class="label">最近邻 Jaccard</div><div class="metric">0.149</div><div class="small">最高 0.282</div></div>
+<div class="card"><div class="label">最近邻 containment</div><div class="metric">0.316</div><div class="small">最高 0.516</div></div>
+<div class="card"><div class="label">高相似样本对</div><div class="metric good">0</div><div class="small">J≥.5 或 C≥.8</div></div>
+</section><div class="two" style="margin-top:18px"><div><h3>最相似的 10 对 Input</h3><div class="table-wrap"><table><thead><tr><th>样本 A</th><th>样本 B</th><th>Jaccard</th><th>Containment</th></tr></thead><tbody><tr><td>014.json</td><td>080.json</td><td>0.242</td><td>0.516</td></tr><tr><td>014.json</td><td>015.json</td><td>0.254</td><td>0.492</td></tr><tr><td>015.json</td><td>080.json</td><td>0.276</td><td>0.467</td></tr><tr><td>009.json</td><td>022.json</td><td>0.282</td><td>0.463</td></tr><tr><td>015.json</td><td>089.json</td><td>0.245</td><td>0.450</td></tr><tr><td>080.json</td><td>089.json</td><td>0.217</td><td>0.443</td></tr><tr><td>014.json</td><td>061.json</td><td>0.261</td><td>0.437</td></tr><tr><td>014.json</td><td>089.json</td><td>0.261</td><td>0.437</td></tr><tr><td>037.json</td><td>067.json</td><td>0.143</td><td>0.427</td></tr><tr><td>053.json</td><td>081.json</td><td>0.251</td><td>0.413</td></tr></tbody></table></div></div><div><h3>长度与结构</h3><p>字符数：最短 91，中位数 145.5，最长 245。</p><p>对话行数：最少 1，中位数 3.0，最多 6。</p><div class="callout" style="border-color:var(--amber);background:#fffaf0"><strong>为何不能只加相似度门槛？</strong>最高 Jaccard 仅 0.282，但 90% 左右样本仍落在两个 Step。文本差异不能替代业务分支覆盖。</div></div></div></section>
+
+<section class="panel"><h2>目标 Answer 重复</h2><p class="sub">只有 17 个唯一完整 Answer；37 条属于已有 Answer 的再次出现。</p><div class="table-wrap"><table><thead><tr><th>出现次数</th><th>Step</th><th>Action</th><th>Response</th></tr></thead><tbody><tr><td>19</td><td>5.2</td><td>moveon</td><td class="wrap">系统返回暂不可办理。请按系统提示转人工或稍后重试；需要我说明核对或改善方式吗？</td></tr><tr><td>14</td><td>5.2</td><td>moveon</td><td class="wrap">系统返回无申请记录。请核对申请编号和身份信息后重查；需要我说明核对或改善方式吗？</td></tr><tr><td>5</td><td>3.1</td><td>moveon</td><td class="wrap">当前还缺居住证明。请按官方页面补充；系统核验前，我不会把客户自述视为已确认。请在通知起15个工作日内提交，逾期申请会关闭。</td></tr><tr><td>2</td><td>3.1</td><td>moveon</td><td class="wrap">当前还缺工作证明。请按官方页面补充；系统核验前，我不会把客户自述视为已确认。请在通知起15个工作日内提交，逾期申请会关闭。</td></tr><tr><td>2</td><td>5.2</td><td>moveon</td><td class="wrap">系统返回已撤销。本次申请已关闭；需要我说明核对或改善方式吗？</td></tr></tbody></table></div></section>
+
+<section class="panel"><h2>是否需要降低同质化？</h2><div class="decision"><div class="keep"><strong>可以保留</strong><ul><li>Input 文本无精确重复。</li><li>长度、轮数和开场角色存在一定变化。</li><li>已有成功样本可作为自由生成基线。</li></ul></div><div class="change"><strong>必须新增</strong><ul><li>从 Output Schema 的 enum 确定性抽样软目标。</li><li>让模型只修正 Requirements 中不可达或冲突的最少字段。</li><li>保存 sampled enum 与最终值的偏差，监控实际分支覆盖。</li><li>重跑剩余编号时优先覆盖缺失 Step，而不是继续自由选择。</li></ul></div></div></section>
+
+<section class="panel"><h2>enum 软目标方案</h2><div class="flow"><div class="node">递归收集 enum<br><span class="small">step / rule / name / nested items</span></div><div class="arrow">→</div><div class="node">按编号确定性抽样<br><span class="small">001、002…可复现</span></div><div class="arrow">→</div><div class="node">模型检查可达性<br><span class="small">只改冲突最少字段</span></div></div><p class="sub" style="margin-top:18px">这是一种软约束：Schema 的独立 enum 组合并不保证语义可达，因此 Requirements 具有最终优先级。记录抽样值与最终值，可以区分“目标不可达”与“模型无视覆盖提示”。</p></section>
+
+<section class="panel"><h2>成功样本明细</h2><div class="controls"><select id="stepFilter"><option value="">全部 Step</option><option value="3.1">Step 3.1（14）</option><option value="3.2">Step 3.2（1）</option><option value="4.1">Step 4.1（2）</option><option value="5.1">Step 5.1（2）</option><option value="5.2">Step 5.2（35）</option></select><input id="searchBox" placeholder="搜索编号或 Input 文本"></div><div class="table-wrap"><table id="sampleTable"><thead><tr><th>编号</th><th>Step</th><th>Action</th><th>Rate source</th><th>Input</th></tr></thead><tbody><tr data-step="3.1"><td>001.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：已按你提供的申请编号完成身份核验，申请在资料提交环节。
+user：那我现在资料算交齐了吗？
+assistant：还没有。系统刚返回“待补件”，缺失材料为收入证明；自通知起15个工作日内需经官方页面补充，逾期申请会关闭。
+user：我收入肯定达标，单位也能说明。先口头报给你们当已确认行不行，能不能别再传收入证明？</td></tr><tr data-step="3.1"><td>003.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我在官方APP提交信用卡申请后收到补件通知，想确认现在到底还缺什么。
+assistant：身份核验已通过。我刚按官方页面核对，审批系统返回状态为待补件，返回材料名称为「居住证明」，其余资料暂未显示缺失。
+user：居住情况我昨天已经向网点口头说明，也在邮件里写过地址，为什么还要补？能不能先按我说的算已交？</td></tr><tr data-step="3.1"><td>004.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：身份核验已完成。审批系统返回申请状态为“待补件”，材料名称是“工作证明”；官方申请页面也提示须在通知起15个工作日内提交。
+user：我在现单位做了两年多，月收入也够，刚已把单位全称、性质和职位报给你。这样还不能当作工作证明已确认吗？</td></tr><tr data-step="3.1"><td>005.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：按你提供的申请编号尾号013完成身份核验后，审批系统刚返回：终审待补件，缺失材料为工作证明；通知日起15个工作日内提交，逾期申请会关闭。
+user：工作证明我上周就让单位开了，只是还没拍照上传。能不能先按我口述认定已补齐，别影响审批？</td></tr><tr data-step="5.1"><td>006.json</td><td><span class="pill">5.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，麻烦帮我查一下信用卡申请到哪一步了，申请编号是2024-KJ-****1036。
+assistant：好的，已按官方流程为您完成身份核验。我刚从系统查到，您尾号1036的申请当前显示为制卡中，寄送环节的结果还没有返回。
+user：制卡中是不是就代表已经批了？那卡片大概什么时候能寄出来，我下周要出差，担心收不到。</td></tr><tr data-step="5.2"><td>007.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心。请先提供申请编号并按官方流程完成身份核验；核验完成前，我无法确认申请状态。
+user：申请编号是 SJ2026-0418-093，身份核验我刚在官方页面完成了。
+assistant：已按官方流程完成核验。我刚从审批系统查询，返回结果是暂不可办理，暂时没有更细的失败原因。
+user：暂不可办理是什么意思？我现在还能继续提交，还是要等以后再试？</td></tr><tr data-step="5.2"><td>009.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：请提供申请编号，并按官方页面完成身份核验；核验完成前我不能确认申请状态。
+user：申请编号是 CC2026****4017，证件后四位和本人实名手机号校验都通过了。你帮我看看到哪一步了。
+assistant：身份核验已完成。我按该编号在审批系统查询，系统返回：无申请记录。
+user：无申请记录是什么意思？我前天还在官方APP填过并收到提交提示。现在能重查吗，下一步该怎么做？</td></tr><tr data-step="5.2"><td>011.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：身份核验已完成，我也核对了申请信息。刚查询审批系统，返回状态是“暂不可办理”，没有同步返回审批拒绝、补件、制卡或寄送结论。
+user：那这不等于被拒吧？我下一步是重新提交，还是按系统提示转人工或稍后再试？</td></tr><tr data-step="5.2"><td>012.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心，请问有什么可以帮您？
+user：你好，我想查一下我的信用卡申请审批结果，申请编号尾号是0827。
+assistant：好的，您的身份核验已通过。我刚查询了审批系统，系统返回无申请记录。
+user：怎么会没有记录？我前几天明明在官网提交过申请，能告诉我是怎么回事吗？</td></tr><tr data-step="3.1"><td>013.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我上周在手机银行提交了信用卡申请，想查现在到哪一步。
+assistant：已按你提供的申请编号 XYK-2026-0413 完成身份核验；审批系统当前返回“待补件”，缺失材料为“资产证明”。
+user：我也看到页面有待补件。到底还缺哪一项？我口头说自己名下有套公寓能算吗，最晚多久内交？</td></tr><tr data-step="5.2"><td>014.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我想查一下信用卡申请现在到哪一步了，申请编号是 SB202410220073。
+assistant：好的，请您先完成身份核验。已核验通过，我刚在审批系统查询，系统返回的结果是“暂不可办理”。
+user：暂不可办理是什么意思？是被拒了吗？那我现在该怎么处理？</td></tr><tr data-step="5.2"><td>015.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我想查一下我的信用卡申请现在办到哪一步了。
+assistant：您好，查询申请进度需要先完成身份核验，请您提供申请编号并按官方流程验证身份。
+user：申请编号是SQ20241008，我刚在官方APP里完成了人脸核验。
+assistant：身份核验已通过。我刚从审批系统查询，系统返回结果为“暂不可办理”，页面提示可按指引转人工或稍后重试。
+user：暂不可办理是什么意思？那我现在该怎么办？</td></tr><tr data-step="5.2"><td>016.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心。您想了解卡种、开始申请，还是查询已有申请？
+user：我查申请进度，编号是CC2026-046213，身份核验刚才在官方APP里通过了。
+assistant：已按该编号完成核验，系统返回：无申请记录。
+user：可我确实填过资料。那我现在是该核对编号和身份信息后再重查吗？</td></tr><tr data-step="3.1"><td>017.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我已在手机银行提交信用卡申请，申请编号是 CZ-4M7-209，刚才也完成了身份核验。
+assistant：已按官方流程核验。系统返回状态为“待补件”，仅缺材料“居住证明”，补件通知已生成。
+user：房子登记在我表姐名下，我在申请备注里写了实际住址，也请她口头帮我证明了。这样算不算已经补齐，页面还要我重新上传吗？</td></tr><tr data-step="5.2"><td>018.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我想查信用卡申请结果，编号是 NK7Q-2084。
+assistant：身份核验已通过。我刚按该编号查询，系统返回：暂不可办理。
+user：这不算正式拒绝吧？我现在该重新提交，还是按提示转人工处理？</td></tr><tr data-step="3.1"><td>019.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：身份核验已通过。我刚核对官方申请页面，系统返回为“待补件”，缺收入证明；通知起15个工作日内未提交会自动关闭。
+user：我昨晚在APP留言写了月收入情况，还传了车间主任签字的便条照片，这不就算收入说明了吗？现在能进审批吗？</td></tr><tr data-step="5.2"><td>020.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您在手机银行提交信用卡申请后要求不再办理，我已用申请编号 A20250418007 按官方流程完成身份核验并查询；系统返回：已撤销。
+user：好的。我想确认现在是不是已经彻底关闭，后续还要不要补件、等审批，或者做别的处理？</td></tr><tr data-step="5.2"><td>022.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我想查一下信用卡申请到哪一步了。
+assistant：可以，请提供申请编号，并按官方流程完成身份核验；核验完成前，我无法确认申请状态。
+user：编号是 CC2025031200468，身份证后四位 4821，手机号本人实名，刚才已在官方页面完成人脸核验。
+assistant：身份核验已完成。我刚按该编号在审批系统查询，系统返回：无申请记录。
+user：怎么会没有记录？我前天明明填过资料。那现在算没提交成功吗，下一步怎么办？</td></tr><tr data-step="3.1"><td>026.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：已按你提供的申请编号完成身份核验。系统刚返回材料审核状态：待补件，缺失项为近三个月收入证明；其他资料暂未提示异常。
+user：我上个月口头报过税前月收入，单位行政也说能作证，这还不能算确认吗？现在到底要补哪一份，最晚多久内交？</td></tr><tr data-step="5.2"><td>031.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：已按您提供的申请编号 XK-31A7-9042 完成身份核验，我刚从审批系统查到返回结果为“暂不可办理”，页面未显示可补充材料。
+user：那就是现在不能继续走流程了吗？我接下来是按提示转人工，还是过会儿再查一次？</td></tr><tr data-step="5.2"><td>032.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您提供的申请编号 CRD-58M2-虚拟 已完成官方身份核验。我刚按编号在审批系统重查，系统明确返回：无申请记录。
+user：无申请记录是什么意思？我下一步该怎么处理，需要重查还是请你说明核对方式？</td></tr><tr data-step="5.2"><td>035.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：身份核验已通过。我按申请编号尾号4820查询，审批系统明确返回：已撤销。
+user：那就是不用再补收入证明，也不会制卡寄送了对吗？之后我要核对或改善，该从哪里看？</td></tr><tr data-step="5.2"><td>037.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：已通过身份核验查到您的申请编号，审批系统刚刚返回的处理结果是暂不可办理，目前没有进一步的状态说明。
+user：暂不可办理是什么意思？这算不算被拒绝了？我接下来该怎么处理？</td></tr><tr data-step="5.2"><td>038.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我上周在手机银行提交了信用卡申请，申请编号 CD58T2，刚才已按页面完成人脸和短信核验，想查办理结果。
+assistant：身份核验已通过，我按该编号查询审批系统，返回状态为“暂不可办理”，页面同步提示可转人工或稍后重试。
+user：那我现在是不能继续办了吗？下一步该怎么做？</td></tr><tr data-step="3.1"><td>039.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我上周在手机银行提交了信用卡申请，想问问现在办到哪一步了。
+assistant：您好，查询进度需要先完成身份核验，请您提供申请编号。
+user：申请编号是2024****8612，其他核验信息我可以配合提供。
+assistant：核验已通过。我刚在系统查到您的申请当前状态为“待补件”，返回的缺失材料是收入证明。
+user：我月收入上次电话里都跟你们客服说过了，九千多块，这还不算数吗？你们到底还缺什么材料，能不能一次说清楚？</td></tr><tr data-step="5.2"><td>041.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我的申请编号是CA2025081****，刚才已经在APP里完成了身份核验，麻烦帮我查一下申请结果。
+assistant：身份核验已通过，我在审批系统查询到您的申请返回结果是暂不可办理。
+user：暂不可办理？这是被拒了吗，我接下来要怎么处理？</td></tr><tr data-step="5.2"><td>044.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：已按官方流程核验身份并核对申请编号KA-44-9130，审批系统刚返回的处理状态是“暂不可办理”。
+user：那这次是不是已经结束了？我现在该点重新申请，还是等一会儿再试？</td></tr><tr data-step="3.1"><td>045.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：你这笔信用卡申请我已在系统里查到，当前状态是待补件，返回缺失材料为居住证明；其他项目暂无待办。
+user：我确实住在申请表填的地址，身份证也在身边，这还不能算确认吗？一定要再交居住证明吗？</td></tr><tr data-step="5.2"><td>049.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我想查信用卡申请结果。申请编号是 NK7Q2M8P，证件号和手机号已按官方页面脱敏录入，刚才人脸识别也通过了。
+assistant：身份核验已完成。我按申请编号 NK7Q2M8P 在审批系统查询，系统明确返回：无申请记录。
+user：这算什么情况？我现在该核对哪几项，之后怎么重新查？</td></tr><tr data-step="5.2"><td>052.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心。您想开始申请，还是查询已有申请？
+user：查进度。申请编号是NK20240518C076，身份核验已按页面完成。
+assistant：已按官方流程完成身份核验；我刚核验系统，返回结果是无申请记录。
+user：无记录是什么意思？那我前面提交的到底算不算失败，现在能查额度或结果吗？</td></tr><tr data-step="5.2"><td>053.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我想查一下信用卡申请的结果，申请编号是 NK20250603****，尾号我记不全了。
+assistant：好的，已按官方流程完成身份核验。我刚查询审批系统，您这笔申请当前返回的状态是“暂不可办理”，暂未返回进一步结论。
+user：暂不可办理？这是不是就是被拒了？那我现在该做什么，还能继续办吗？</td></tr><tr data-step="5.2"><td>055.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您提供的申请编号 K7Q2-8M14-ZC 已按官方流程完成身份核验；我刚在审批系统按该编号查询，系统返回“无申请记录”，暂未看到受理信息。
+user：无申请记录是什么意思？我不是被拒了吧？现在应该核对后重查，还是要补材料？</td></tr><tr data-step="5.2"><td>056.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我想查一下信用卡申请结果，申请编号是CC2025031896，刚才已完成身份核验。
+assistant：我按该编号查询后，审批系统明确返回：无申请记录，目前未查到对应的申请信息。
+user：无申请记录是什么意思？是不是审批没通过，还是编号查错了？</td></tr><tr data-step="5.2"><td>060.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：已按你提供的申请编号 SQ2025061188 完成身份核验。审批系统刚刚返回：暂不可办理。
+user：不是拒绝吧？那我下一步该怎么办，能重新提交还是等一会儿再试？</td></tr><tr data-step="5.2"><td>061.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：您好，我想查一下信用卡申请到哪一步了，申请编号是NK20240611****，身份证号后四位是0527。
+assistant：身份核验已通过。我刚在审批系统查询，您这笔申请当前返回的状态是暂不可办理，页面没有显示具体原因。
+user：暂不可办理是什么意思？那我现在该怎么处理，还能继续吗？</td></tr><tr data-step="5.2"><td>062.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：麻烦查一下信用卡申请进度，申请编号 KA20260418QZ7031，申请人周先生，刚才已按官方页面完成身份核验。
+assistant：已按该编号和实名信息在申请系统核对，系统返回：无申请记录。
+user：我上周明明在APP填过资料，现在查不到是怎么回事？要先核对信息，还是直接重新申请？</td></tr><tr data-step="5.2"><td>063.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：身份核验已通过。我按你提供的申请编号 A9C7-2024-6381 在审批系统查询，系统返回：无申请记录。
+user：我三天前在官网填过资料，怎么会显示无申请记录？现在该重新提交，还是先核对哪里？</td></tr><tr data-step="5.2"><td>067.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心，请问您想咨询哪方面业务？
+user：我三周前在手机银行提交了信用卡申请，一直没收到任何通知，想查一下现在是什么状态。
+assistant：好的，我先为您核验身份。请提供您的申请编号和办卡时预留的姓名。
+user：申请编号是CC2025-88317，预留姓名是李*岚。
+assistant：身份核验已通过。我刚从审批系统查询到，您这笔申请系统返回“暂不可办理”，目前没有进一步明细。
+user：暂不可办理是什么意思？是被拒了吗，我接下来该怎么处理？</td></tr><tr data-step="3.1"><td>068.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：申请编号尾号 7306，麻烦看下我的信用卡申请到哪一步了。
+assistant：已按官方流程完成身份核验。系统返回当前为待补件，缺失材料是近3个月银行流水；通知要求自通知起15个工作日内提交，逾期申请会关闭。
+user：流水我还没去打印。我现在口头说明这三个月收入和转账情况，能不能先算我已经补齐？</td></tr><tr data-step="5.2"><td>070.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：身份核验已完成。我按你提供的申请编号尾号 7316 查询，审批系统返回：暂不可办理；当前没有更具体原因，也未显示可补件。
+user：暂不可办理是什么意思？那我现在具体要怎么处理？</td></tr><tr data-step="5.1"><td>071.json</td><td><span class="pill">5.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：麻烦查下我的信用卡申请，编号 XK-2604-7713，我在官方页做过身份核验了。
+assistant：已按该编号读取受理系统，当前状态明确返回为“终审中”；尚未返回通过、拒绝、卡种或额度，也没有补件任务。
+user：那终审中是不是还没定？如果申请页没有待办红点，我现在不重复提交、不传材料，只等短信或APP通知对吗？</td></tr><tr data-step="5.2"><td>072.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我想查一下信用卡申请，页面一直进不去，麻烦看看是不是没有提交成功。
+assistant：身份核验已完成。我刚刚查询系统，返回结果是“暂不可办理”，目前没有更多审批细节。
+user：这个结果是什么意思？我是不是现在不能办了？</td></tr><tr data-step="3.1"><td>079.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：身份核验已通过。系统对申请编号C202***417返回的状态是待补件，缺失材料为居住证明。user：我申请表里已经写了租住地址，房东也能作证，能不能按我说的先确认，把这项补件取消？</td></tr><tr data-step="5.2"><td>080.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我想查一下信用卡申请进度，编号是CC2024‌0630‌88，上周在官网提交的。
+assistant：好的，请您先按官方流程完成身份核验，我核对到信息后再为您查询。
+user：核验我刚在APP里做人脸通过了，你帮我看看现在到哪一步了？
+assistant：身份核验已通过。我刚从审批系统查询到您该编号申请的状态，系统返回为“暂不可办理”，页面提示可转人工或稍后重试。
+user：暂不可办理是什么意思？是拒了吗？那我现在该怎么办，还能不能继续办？</td></tr><tr data-step="5.2"><td>081.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我想查一下前几天在网上提交的信用卡申请现在到哪一步了。
+assistant：好的，已按官方流程完成身份核验。我刚在审批系统查询了您这笔申请，系统当前返回的状态是「暂不可办理」，尚未出具审批结论。
+user：暂不可办理是什么意思？这是不是代表我被拒绝了？需要我重新提交一遍申请吗？</td></tr><tr data-step="5.2"><td>084.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我想查信用卡申请进度，申请编号是 KA7Q-2604-0081，身份核验也请帮我确认一下。
+assistant：已按官方流程完成身份核验。我用该编号查询审批系统，系统返回：无申请记录。
+user：可我前天晚上在官网填完还点了提交，页面像是接收了。那这是没提交成功还是被拒了？我现在该先核对什么？</td></tr><tr data-step="3.1"><td>086.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心。我已根据您提供的申请编号完成身份核验，刚查询到系统当前状态为待补件，返回的缺失材料是居住证明。
+user：居住证明我前两天已经交到网点了，工作人员也说收到了，这样还不算补齐吗？</td></tr><tr data-step="5.2"><td>089.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：你好，我想查一下信用卡申请的审批结果，申请编号是SQ202506120084，姓名林某，可以配合身份核验。
+assistant：好的，您的身份核验已通过。我刚从审批系统查询到，该申请当前返回结果为“暂不可办理”。
+user：暂不可办理是什么意思？是我被拒了吗，那我现在还能不能继续办这张卡？</td></tr><tr data-step="4.1"><td>091.json</td><td><span class="pill">4.1</span></td><td>moveon</td><td>客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心。您想了解卡种、开始申请，还是查询已有申请？
+user：我还没申请过，想先了解清楚再决定办不办。
+assistant：可以，我先按您的需要说明。您更关心申请条件、卡种额度，还是办理渠道？
+user：条件方面我有个担心。最近三个月我点过好几家网贷和信用卡的额度测算，征信被查了不少次，听说查询次数多会影响审批，咱们这边的具体规定是什么？</td></tr><tr data-step="3.2"><td>092.json</td><td><span class="pill">3.2</span></td><td>moveon</td><td>客户</td><td class="wrap sample-input">assistant：请从银行官方APP进入信用卡申请入口，选好卡种后按页面提示逐项如实填写并上传身份证照片，有哪一项不清楚可以告诉我。
+user：信息我都按要求填完了，身份证照片也上传成功，页面没提示缺东西。这样是不是就算申请提交成功了？</td></tr><tr data-step="3.1"><td>095.json</td><td><span class="pill">3.1</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">assistant：您好，这里是信用卡中心。您是想继续手机银行的申请，还是查询已有申请？
+user：继续办，我在官网填到一半，刚收到短信说要补材料。
+assistant：我以页面返回为准：当前状态是待补件，系统列明还缺居住证明；补件通知今天已发出。您看到页面待办了吗？
+user：我住单位宿舍两年了，楼管能作证，我本人说明还不算数吗？现在到底要交哪样，最晚什么时候交？</td></tr><tr data-step="4.1"><td>096.json</td><td><span class="pill">4.1</span></td><td>moveon</td><td>客户</td><td class="wrap sample-input">user：我刚在手机银行打开信用卡申请，正填到地址信息那一页。
+assistant：请进入官方信用卡申请入口并选择卡种，按页面逐项如实填写；有哪一项不清楚可以告诉我。
+user：我租的公寓就在公司楼上，收发信件都方便，家庭地址和单位地址填成一样的可以吗？</td></tr><tr data-step="5.2"><td>099.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我想查一下信用卡申请现在到哪一步了，有没有制卡或寄出。
+assistant：已按官方流程完成身份核验；我用你提供的申请编号尾号4826在审批系统查询，系统明确返回：无申请记录。
+user：不对吧，我记得在APP里点过提交。那你现在告诉我，到底是批了还是没批，卡片什么时候寄？</td></tr><tr data-step="5.2"><td>100.json</td><td><span class="pill">5.2</span></td><td>moveon</td><td>客服+客户</td><td class="wrap sample-input">user：我前天在官网提交了信用卡申请，页面生成申请编号 CA-7Q2-4826，刚才也按提示完成了官方身份核验。帮我查现在到哪一步了。
+assistant：已用该编号完成身份核验并查询审批系统，系统返回：无申请记录；页面暂无可办待办。
+user：我确实填完并做了电子签名，这不等于被拒吧？现在下一步是先核对编号，还是能说明怎么改善？</td></tr></tbody></table></div></section>
+
+<div class="footer">数据源：answer_first_input_synthesis_20260813/runs/simple/001_bank_01_信用卡申请审批流程_v28 · 统计口径：status=ok · 单文件离线报告</div>
+</main>
+<script>
+const stepFilter=document.getElementById('stepFilter');const searchBox=document.getElementById('searchBox');const rows=[...document.querySelectorAll('#sampleTable tbody tr')];
+function applyFilter(){const step=stepFilter.value;const query=searchBox.value.trim().toLowerCase();rows.forEach(row=>{const stepOk=!step||row.dataset.step===step;const textOk=!query||row.textContent.toLowerCase().includes(query);row.style.display=stepOk&&textOk?'':'none';});}
+stepFilter.addEventListener('change',applyFilter);searchBox.addEventListener('input',applyFilter);
+</script>
+</body></html>
