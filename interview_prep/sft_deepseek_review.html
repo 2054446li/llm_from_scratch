@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="通用深度学习、SFT、RL 前置知识、DeepSeek 系列与 DeepSeek-V4 后训练逐题复习站">
   <title>深度学习 × SFT × DeepSeek 复习台</title>
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
   <style>
     :root {
       --bg: #08111f;
@@ -41,7 +42,7 @@
     button, input, textarea { font: inherit; }
     button { color: inherit; }
     a { color: var(--blue); }
-    code, .formula {
+    code {
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     }
 
@@ -318,6 +319,21 @@
       background: #07111e;
       border: 1px solid var(--line);
       border-radius: 12px;
+    }
+    .formula-line { min-width: max-content; }
+    .formula-line + .formula-line {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(168, 197, 232, .12);
+    }
+    .formula .katex-display {
+      margin: .35em 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      text-align: left;
+    }
+    .formula-fallback {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       white-space: pre-wrap;
     }
     .trap { color: #ffd9df !important; }
@@ -521,6 +537,7 @@
 
   <div class="toast" id="toast" role="status"></div>
 
+  <script src="vendor/katex/katex.min.js"></script>
   <script>
     "use strict";
 
@@ -538,7 +555,10 @@
         id: "dl-01", module: "dl", topic: "反向传播", level: "必会", origin: "补充",
         question: "反向传播的本质是什么？它与梯度下降是什么关系？",
         answer: "反向传播是在计算图上应用链式法则，高效求出损失对每个参数的梯度；梯度下降则利用这些梯度更新参数。前者负责‘怎么算梯度’，后者负责‘怎样走一步’。",
-        formula: "若 L=f(g(x))，则 ∂L/∂x=(∂L/∂g)(∂g/∂x)\n参数更新：θ←θ-η∇_θL",
+        formula: [
+          String.raw`\text{若 }L=f(g(x)),\quad \frac{\partial L}{\partial x}=\frac{\partial L}{\partial g}\frac{\partial g}{\partial x}`,
+          String.raw`\theta \leftarrow \theta-\eta\nabla_{\theta}L`
+        ],
         sections: [
           ["计算图", "前向保存必要中间量；反向从标量 loss 开始，按拓扑逆序传播 vector-Jacobian product，并把多个下游分支的梯度相加。"],
           ["为什么高效", "逐参数有限差分需 O(P) 次前向；reverse-mode autodiff 对标量输出一次反向即可获得全部 P 个参数梯度，代价通常是若干倍前向。"],
@@ -564,7 +584,11 @@
         id: "dl-03", module: "dl", topic: "损失函数", level: "必会", origin: "补充",
         question: "MSE、BCE、Cross‑Entropy 分别适合什么任务？它们与最大似然有什么关系？",
         answer: "MSE 常对应高斯噪声回归；BCE 对每个二元标签建 Bernoulli；多类交叉熵对 categorical 分布做负对数似然。选择损失应匹配输出概率模型和标签结构。",
-        formula: "MSE=(1/N)Σ(y-ŷ)²\nBCE=-[y log p+(1-y)log(1-p)]\nCE=-Σ_c y_c log p_c",
+        formula: [
+          String.raw`\mathrm{MSE}=\frac{1}{N}\sum_{i=1}^{N}(y_i-\hat y_i)^2`,
+          String.raw`\mathrm{BCE}=-\left[y\log p+(1-y)\log(1-p)\right]`,
+          String.raw`\mathrm{CE}=-\sum_c y_c\log p_c`
+        ],
         sections: [
           ["任务", ["回归：MSE/MAE/Huber，取决于异常值与噪声假设。", "二分类或多标签：每类 sigmoid＋BCE。", "互斥多分类：softmax＋CE。"]],
           ["logits 版", "BCEWithLogitsLoss 与 CrossEntropyLoss 把激活和 log-loss 合并，用稳定公式避免先 sigmoid/softmax 后取 log 的下溢。"],
@@ -577,7 +601,10 @@
         id: "dl-04", module: "dl", topic: "Softmax", level: "必会", origin: "补充",
         question: "Softmax 为什么要减去最大 logit？Cross‑Entropy 与 Softmax 为什么常合并实现？",
         answer: "softmax 对整体平移不变，先减最大值可让最大指数为 1，避免 exp 溢出；与交叉熵合并后可用 log-sum-exp 直接计算 log probability，减少下溢并得到简洁稳定梯度。",
-        formula: "softmax(z_i)=exp(z_i-m)/Σ_j exp(z_j-m), m=max(z)\nCE(z,y)=logΣ_j exp(z_j)-z_y",
+        formula: [
+          String.raw`\operatorname{softmax}(z_i)=\frac{\exp(z_i-m)}{\sum_j\exp(z_j-m)},\quad m=\max_j z_j`,
+          String.raw`\mathrm{CE}(z,y)=\log\sum_j\exp(z_j)-z_y`
+        ],
         sections: [
           ["梯度", "one-hot 标签下，交叉熵对 logit 的梯度为 p_i-y_i；预测概率高于标签目标就向下压，低于目标就上拉。"],
           ["温度", "softmax(z/T)：T>1 分布更平，T<1 更尖。蒸馏用较高温度暴露类别间的暗知识，推理温度调节采样多样性。"],
@@ -602,7 +629,10 @@
         id: "dl-06", module: "dl", topic: "参数初始化", level: "必会", origin: "补充",
         question: "Xavier 与 He 初始化分别基于什么假设？为什么不能全零初始化？",
         answer: "Xavier 让线性/tanh 网络前后向方差近似保持，尺度与 fan_in、fan_out 有关；He 针对 ReLU 一半激活被截断，方差约取 2/fan_in。全零会让同层神经元保持对称、学到相同特征。",
-        formula: "Xavier: Var(W)≈2/(fan_in+fan_out)\nHe: Var(W)≈2/fan_in",
+        formula: [
+          String.raw`\operatorname{Var}(W)_{\text{Xavier}}\approx\frac{2}{\mathrm{fan}_{\mathrm{in}}+\mathrm{fan}_{\mathrm{out}}}`,
+          String.raw`\operatorname{Var}(W)_{\text{He}}\approx\frac{2}{\mathrm{fan}_{\mathrm{in}}}`
+        ],
         sections: [
           ["目标", "让不同深度的激活与梯度保持可控尺度，避免一开始就饱和、消失或爆炸。"],
           ["对称性", "同层权重若完全相同，接收相同梯度，后续仍相同；随机初始化打破这种对称。bias 可以初始化为零，因为权重已经区分神经元。"],
@@ -716,7 +746,7 @@
         id: "dl-15", module: "dl", topic: "类别不平衡", level: "必会", origin: "补充",
         question: "类别不平衡有哪些处理办法？什么时候用 class weight、重采样或 focal loss？",
         answer: "可在数据层过采少数类/欠采多数类，在损失层使用 class-balanced weight 或 focal loss，在决策层调整阈值；选择取决于样本量、噪声、概率校准和业务误报/漏报成本。",
-        formula: "Focal Loss = -α_t(1-p_t)^γ log p_t",
+        formula: String.raw`\mathcal{L}_{\mathrm{focal}}=-\alpha_t(1-p_t)^{\gamma}\log p_t`,
         sections: [
           ["重采样", "过采提高少数类曝光但可能过拟合；欠采降低多数类信息；合成采样需防止制造不真实样本。"],
           ["加权与 Focal", "class weight 改变错误成本；focal 用 (1-p_t)^γ 降低易样本权重，聚焦难例，常用于目标检测。"],
@@ -729,7 +759,10 @@
         id: "dl-16", module: "dl", topic: "分类指标", level: "必会", origin: "补充",
         question: "Precision、Recall、Specificity、F1、Macro/Micro/Weighted averaging 如何解释？",
         answer: "Precision=预测为正中有多少真；Recall=真实正中找回多少；Specificity=真实负中排除多少；F1 是 precision/recall 调和平均。Macro 每类等权，Micro 汇总样本计数，Weighted 按类频加权。",
-        formula: "Precision=TP/(TP+FP)\nRecall=TP/(TP+FN)\nSpecificity=TN/(TN+FP)\nF1=2PR/(P+R)",
+        formula: [
+          String.raw`\mathrm{Precision}=\frac{TP}{TP+FP},\qquad \mathrm{Recall}=\frac{TP}{TP+FN}`,
+          String.raw`\mathrm{Specificity}=\frac{TN}{TN+FP},\qquad F_1=\frac{2PR}{P+R}`
+        ],
         sections: [
           ["业务", "诈骗检测常重 recall 但需控制误报；搜索/推荐 top 结果常重 precision；医疗筛查与确诊阶段的权重也不同。"],
           ["多分类", "对每类做 one-vs-rest 后平均。Macro 暴露少数类表现，Micro 在单标签多分类中与 accuracy 密切相关。"],
@@ -778,7 +811,7 @@
         id: "dl-20", module: "dl", topic: "卷积", level: "必会", origin: "补充",
         question: "二维卷积的 kernel、stride、padding、dilation、groups 分别控制什么？",
         answer: "kernel 决定局部窗口，stride 决定移动步长和下采样，padding 控制边界与输出尺寸，dilation 扩大采样间隔和感受野，groups 限制通道连接；depthwise convolution 是 groups 等于输入通道的特例。",
-        formula: "H_out=⌊(H+2P-D(K-1)-1)/S⌋+1",
+        formula: String.raw`H_{\mathrm{out}}=\left\lfloor\frac{H+2P-D(K-1)-1}{S}\right\rfloor+1`,
         sections: [
           ["参数共享", "同一卷积核在空间位置共享，带来平移等变性并显著减少参数；卷积参数约 K_hK_wC_inC_out/groups。"],
           ["常见卷积", ["1×1：混合通道、调整维度。", "Depthwise：每通道独立空间卷积。", "Pointwise：1×1 混合通道，常与 depthwise 组合。", "Transposed convolution：学习上采样，但可能有棋盘格伪影。"]],
@@ -827,7 +860,10 @@
         id: "dl-24", module: "dl", topic: "残差连接", level: "必会", origin: "已有＋补充",
         question: "Residual connection 为什么让深层网络更容易训练？",
         answer: "残差块学习 F(x)，输出 x+F(x)，提供恒等信息和梯度捷径；即使新层暂时无用，只需把 F 学到接近零，不必重新学习恒等映射，因此深度增加不再必然造成优化退化。",
-        formula: "y=x+F(x)\n∂L/∂x=∂L/∂y·(I+∂F/∂x)",
+        formula: [
+          String.raw`y=x+F(x)`,
+          String.raw`\frac{\partial L}{\partial x}=\frac{\partial L}{\partial y}\left(I+\frac{\partial F}{\partial x}\right)`
+        ],
         sections: [
           ["优化", "梯度中包含恒等项 I，降低连续 Jacobian 乘积导致的消失风险；网络可视为许多不同深度路径的集成。"],
           ["维度变化", "若通道/尺寸不同，用 projection shortcut（如 1×1 stride conv）对齐；否则可用纯 identity shortcut。"],
@@ -853,7 +889,7 @@
         id: "dl-26", module: "dl", topic: "知识蒸馏", level: "必会", origin: "已有＋补充",
         question: "知识蒸馏中的 hard label、soft target、temperature 和 feature distillation 分别是什么？",
         answer: "hard label 只给正确类别；soft target 使用教师全类别概率传递类别相似性；temperature 调平 logits 暴露低概率信息；feature distillation 让学生中间表示或 attention 对齐教师。",
-        formula: "L=(1-α)CE(y,p_s)+αT²·KL(softmax(z_t/T)||softmax(z_s/T))",
+        formula: String.raw`\mathcal{L}=(1-\alpha)\,\mathrm{CE}(y,p_s)+\alpha T^2\,D_{\mathrm{KL}}\!\left(\operatorname{softmax}\!\left(\frac{z_t}{T}\right)\middle\|\operatorname{softmax}\!\left(\frac{z_s}{T}\right)\right)`,
         sections: [
           ["Dark knowledge", "教师对错误类别的相对概率包含语义相似性和决策边界信息，比 one-hot 标签更密集。"],
           ["容量差", "教师太强/分布太尖或学生太小，直接蒸馏仍难；可用 assistant teacher、课程温度、feature projection 或 on-policy 状态。"],
@@ -867,7 +903,7 @@
         id: "dl-27", module: "dl", topic: "对比学习", level: "高频", origin: "补充",
         question: "对比学习与 InfoNCE 的核心思想是什么？正负样本如何影响表示？",
         answer: "把同一语义的不同视图拉近，把其他样本推远；InfoNCE 将正样本相似度与一组负样本竞争，学习可区分且具有任务不变性的 embedding。",
-        formula: "L_i=-log exp(sim(q,k⁺)/τ) / Σ_j exp(sim(q,k_j)/τ)",
+        formula: String.raw`\mathcal{L}_i=-\log\frac{\exp\!\left(\operatorname{sim}(q,k^+)/\tau\right)}{\sum_j\exp\!\left(\operatorname{sim}(q,k_j)/\tau\right)}`,
         sections: [
           ["正样本", "来自同一图像增强、同句改写、配对图文或同标签样本；若增强破坏语义，模型会被迫学习错误不变性。"],
           ["负样本", "更多负样本常提高判别性，但 false negatives 会把语义相同样本错误推远；可用大 batch、memory bank、去偏或无负样本方法。"],
@@ -880,7 +916,10 @@
         id: "dl-28", module: "dl", topic: "Autoencoder/VAE", level: "高频", origin: "补充",
         question: "普通 Autoencoder 与 VAE 的目标有什么根本差别？",
         answer: "AE 学习确定性编码—解码以重构输入，潜空间可能不连续；VAE 学习潜变量概率分布，优化重构项和对先验的 KL，使潜空间可采样、连续，但重构常更平滑。",
-        formula: "ELBO = E_{q(z|x)}[log p(x|z)] - KL(q(z|x)||p(z))\nz=μ+σ⊙ε, ε~N(0,I)",
+        formula: [
+          String.raw`\mathrm{ELBO}=\mathbb{E}_{q(z\mid x)}[\log p(x\mid z)]-D_{\mathrm{KL}}\!\left(q(z\mid x)\middle\|p(z)\right)`,
+          String.raw`z=\mu+\sigma\odot\epsilon,\qquad \epsilon\sim\mathcal{N}(0,I)`
+        ],
         sections: [
           ["重参数化", "把随机性移到 ε，使 μ、σ 的路径可反向传播；否则直接对随机采样节点难以用普通路径导数。"],
           ["KL 项", "将每个样本 posterior 拉向共同 prior，支持从 prior 采样；权重过强会 posterior collapse，decoder 忽略 z。"],
@@ -893,7 +932,7 @@
         id: "dl-29", module: "dl", topic: "GAN", level: "高频", origin: "补充",
         question: "GAN 的 min-max 目标、mode collapse 和训练不稳定如何理解？",
         answer: "Generator 生成样本欺骗 Discriminator，Discriminator 区分真伪；二者动态博弈而非固定损失最小化。mode collapse 是生成器只覆盖少数模式，常由不平衡更新、梯度问题和判别器反馈局部化引起。",
-        formula: "min_G max_D E_x log D(x)+E_z log(1-D(G(z)))",
+        formula: String.raw`\min_G\max_D\;\mathbb{E}_{x\sim p_{\mathrm{data}}}[\log D(x)]+\mathbb{E}_{z\sim p(z)}[\log(1-D(G(z)))]`,
         sections: [
           ["训练", "实践常用 non-saturating generator loss -log D(G(z)) 提供更强早期梯度；交替更新 G/D，需平衡两者能力。"],
           ["稳定技术", ["WGAN/WGAN-GP 改进距离与 Lipschitz 约束。", "Spectral normalization 限制判别器。", "Feature matching、minibatch discrimination、数据增强。"]],
@@ -906,7 +945,10 @@
         id: "dl-30", module: "dl", topic: "Diffusion", level: "高频", origin: "补充",
         question: "扩散模型的前向加噪、反向去噪和训练目标是什么？",
         answer: "前向过程逐步向数据加入高斯噪声直到接近标准正态；模型学习在给定时间步预测噪声、score 或干净样本，反向从噪声逐步采样回数据。训练稳定但多步采样较慢。",
-        formula: "x_t=√ᾱ_t x_0+√(1-ᾱ_t)ε\n常见目标：E||ε-ε_θ(x_t,t,c)||²",
+        formula: [
+          String.raw`x_t=\sqrt{\bar\alpha_t}\,x_0+\sqrt{1-\bar\alpha_t}\,\epsilon`,
+          String.raw`\mathcal{L}=\mathbb{E}_{x_0,\epsilon,t}\left[\left\|\epsilon-\epsilon_\theta(x_t,t,c)\right\|_2^2\right]`
+        ],
         sections: [
           ["为什么可直接采任意 t", "高斯前向链有闭式 q(x_t|x_0)，训练时不必真的从 1 迭代到 t，可一次构造带噪 x_t。"],
           ["条件生成", "把文本/类别条件输入去噪网络；classifier-free guidance 组合有条件与无条件预测，提高条件一致性但过强会损害多样性。"],
@@ -968,7 +1010,10 @@
         id: "sft-01", module: "sft", topic: "目标函数", level: "必会", origin: "已有＋校正",
         question: "SFT 到底在优化什么？它与预训练的相同点和不同点是什么？",
         answer: "二者通常都用因果语言模型的 next-token 交叉熵；SFT 把训练分布收窄到指令—回复或多轮对话，并常只在 assistant token 上计算条件负对数似然，使模型学习任务接口、行为和回答分布。",
-        formula: "L_SFT(θ) = - Σ_t m_t · log π_θ(y_t | x, y_<t) / Σ_t m_t\n其中 m_t∈{0,1} 是 loss mask；x 是 system/user 条件，y 是目标回复。",
+        formula: [
+          String.raw`\mathcal{L}_{\mathrm{SFT}}(\theta)=-\frac{\sum_t m_t\log\pi_\theta(y_t\mid x,y_{<t})}{\sum_t m_t}`,
+          String.raw`m_t\in\{0,1\}\text{ 为 loss mask；}x\text{ 是条件，}y\text{ 是目标回复。}`
+        ],
         sections: [
           ["共同点", ["都是 teacher forcing：训练时当前位置看到真实历史 token，而不是模型自己刚生成的 token。", "底层目标仍是最大似然估计，梯度来自 token 级交叉熵。"]],
           ["不同点", ["预训练数据规模巨大、任务是学习广泛语言分布；SFT 数据更小、更结构化，强调指令遵循、格式、风格、领域技能与安全边界。", "SFT 常用更小学习率、更少 epoch，并通过 loss mask 控制哪些角色产生梯度。"]],
@@ -982,7 +1027,10 @@
         id: "sft-02", module: "sft", topic: "条件似然", level: "必会", origin: "补充",
         question: "为什么 response-only loss 可以理解为建模 p(response | prompt)？",
         answer: "因为 prompt token 被当作已知条件输入，只有 response token 的对数概率进入目标；链式法则把整段回复的条件概率分解成逐 token 概率之和。",
-        formula: "log p(y | x) = Σ_t log p(y_t | x, y_<t)\nlabels_t = input_ids_t（目标位置）；被忽略位置通常设为 -100。",
+        formula: [
+          String.raw`\log p(y\mid x)=\sum_t\log p(y_t\mid x,y_{<t})`,
+          String.raw`\mathrm{labels}_t=\mathrm{input\_ids}_t\text{（目标位置）};\quad \mathrm{labels}_t=-100\text{（忽略位置）}`
+        ],
         sections: [
           ["直觉", "我们希望模型在给定 system 与 user 消息后生成正确 assistant 回复，而不是花同样权重去复原用户到底说了什么。"],
           ["实现", ["先用 chat template 得到一条 token 序列。", "labels 通常复制 input_ids，再把 system/user/padding 等位置替换为 ignore index。", "交叉熵内部会做一位 shift：位置 t 的 logits 预测位置 t+1 的 label。"]],
@@ -1204,7 +1252,10 @@
         id: "sft-19", module: "sft", topic: "LoRA 原理", level: "必会", origin: "已有＋补充",
         question: "请完整解释 LoRA 的公式、初始化、缩放和 target modules。",
         answer: "LoRA 用 ΔW=(α/r)BA 近似权重更新，冻结 W；常让一个低秩矩阵随机初始化、另一个为零，使训练开始时 ΔW=0。r 决定容量，α/r 决定更新尺度，target modules 决定可适配的子空间。",
-        formula: "h = W x + (α/r) B A x\nA∈R^{r×d_in}, B∈R^{d_out×r}, r ≪ min(d_in,d_out)",
+        formula: [
+          String.raw`h=Wx+\frac{\alpha}{r}BAx`,
+          String.raw`A\in\mathbb{R}^{r\times d_{\mathrm{in}}},\quad B\in\mathbb{R}^{d_{\mathrm{out}}\times r},\quad r\ll\min(d_{\mathrm{in}},d_{\mathrm{out}})`
+        ],
         sections: [
           ["超参数", ["rank r：越大表达容量越强、显存与通信越高。", "alpha：缩放 LoRA 分支，需结合 r 与学习率解释。", "dropout：只作用 LoRA 输入分支，小数据时可轻度正则。"]],
           ["模块选择", ["只做 q/v 投影成本低但容量有限。", "q/k/v/o + FFN gate/up/down 更全面。", "领域词汇或新 special token 可能需要训练 embedding 与 lm_head。"]],
@@ -1244,7 +1295,10 @@
         id: "sft-22", module: "sft", topic: "有效 Batch", level: "高频", origin: "补充",
         question: "global batch、micro batch、gradient accumulation 与 token batch 如何换算？",
         answer: "global sample batch 通常等于每卡 micro batch × 数据并行卡数 × 累积步数；但变长序列下更有意义的是每次 optimizer step 的有效输入/目标 token 数。",
-        formula: "B_global(samples) = B_micro × N_DP × N_accum\nT_effective = Σ_{本次更新全部样本} 有效 label tokens",
+        formula: [
+          String.raw`B_{\mathrm{global}}=B_{\mathrm{micro}}\times N_{\mathrm{DP}}\times N_{\mathrm{accum}}`,
+          String.raw`T_{\mathrm{effective}}=\sum_{i\in\text{本次更新的样本}}\text{有效 label tokens}_i`
+        ],
         sections: [
           ["梯度累积", "多次 forward/backward 后再 optimizer step，主要为显存受限时模拟大 batch；若 loss reduction 与 token 数处理不当，各 micro-batch 不等长时会产生错误加权。"],
           ["token-based batching", "设每批最大 token budget，动态装入不同数量样本，可提升显存利用率并稳定每步计算量。"],
@@ -1441,7 +1495,10 @@
         id: "pre-01", module: "prereq", topic: "Self-Attention", level: "必会", origin: "已有",
         question: "Self‑Attention 的完整计算过程是什么？为什么除以 √dₖ？",
         answer: "X 经线性投影得到 Q/K/V，先算缩放点积并加 mask，再 softmax 得权重，最后加权 V；除以 √dₖ 将点积方差从约 dₖ 拉回常数量级，避免 softmax 饱和和梯度变小。",
-        formula: "Q=XW_Q, K=XW_K, V=XW_V\nAttention(Q,K,V)=softmax(QKᵀ/√d_k + M)V",
+        formula: [
+          String.raw`Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V`,
+          String.raw`\operatorname{Attention}(Q,K,V)=\operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}+M\right)V`
+        ],
         sections: [
           ["方差推导", "若 q_i、k_i 独立、均值 0、方差 1，则 q·k=Σ_i q_i k_i 的方差约为 d_k。除以 √d_k 后方差约为 1。"],
           ["mask", "decoder 的 causal mask 把未来位置置为 -∞；padding/sequence mask 屏蔽无效 token。mask 必须在 softmax 之前应用。"],
@@ -1481,7 +1538,7 @@
         id: "pre-04", module: "prereq", topic: "KV Cache", level: "必会", origin: "已有＋校正",
         question: "KV Cache 占用如何估算？它降低了哪部分计算？",
         answer: "标准 MHA KV 显存约为 2×层数×batch×序列长×KV头数×head_dim×每元素字节；它避免每个 decode step 重算历史 token 的 K/V 投影，但当前 query 仍需与全部历史 key 点积。",
-        formula: "Memory_KV ≈ 2 · N_layers · B · L · H_kv · D_head · bytes",
+        formula: String.raw`\operatorname{Memory}_{\mathrm{KV}}\approx 2\,N_{\mathrm{layers}}\,B\,L\,H_{\mathrm{kv}}\,D_{\mathrm{head}}\,\mathrm{bytes}`,
         sections: [
           ["复杂度", "没有 cache 时每一步都重做完整前缀，累计代价极高；有 cache 后历史投影复用，但单个新 token attention 仍随上下文长度 L 线性读取与计算。"],
           ["系统瓶颈", "decode 常是 memory-bandwidth bound：每生成一个 token 只做少量新计算，却要读取大量权重与 KV。batch 增大可提高权重复用，但 KV 内存也线性增长。"],
@@ -1521,7 +1578,10 @@
         id: "pre-07", module: "prereq", topic: "归一化", level: "必会", origin: "已有＋校正",
         question: "Pre‑LN 与 Post‑LN 的差别是什么？RMSNorm 为什么常用？",
         answer: "Pre‑LN 在子层前归一化，使残差主干近似恒等路径，深层梯度更稳定；RMSNorm 只按均方根缩放、不减均值，计算更简单且在 LLM 中效果良好。",
-        formula: "Pre-LN: x_{l+1}=x_l+F(Norm(x_l))\nRMSNorm(x)=γ⊙x / √(mean(x²)+ε)",
+        formula: [
+          String.raw`\text{Pre-LN:}\qquad x_{l+1}=x_l+F(\operatorname{Norm}(x_l))`,
+          String.raw`\operatorname{RMSNorm}(x)=\gamma\odot\frac{x}{\sqrt{\operatorname{mean}(x^2)+\epsilon}}`
+        ],
         sections: [
           ["梯度路径", "Pre‑LN 的残差支路不经过归一化，反向梯度可沿恒等路径传播；Post‑LN 深层训练通常更依赖 warmup、初始化与残差缩放。"],
           ["RMSNorm", "去掉均值中心化和 bias，并不代表没有可学习 scale γ。它更便宜、数值稳定，已成为 Llama/Qwen/DeepSeek 常见配置。"],
@@ -1535,7 +1595,10 @@
         id: "pre-08", module: "prereq", topic: "SwiGLU", level: "高频", origin: "已有＋校正",
         question: "SwiGLU 的结构和参数量补偿是什么？",
         answer: "SwiGLU 用一条线性分支与一条 SiLU 门控分支逐元素相乘，再投影回模型维度；因包含三个矩阵，常把 FFN 中间维度设为约 8d/3，以接近传统 4d 两矩阵 FFN 的参数量。",
-        formula: "SwiGLU(x) = (xW_gate ⊙ SiLU(xW_up)) W_down\nSiLU(z)=z·σ(z)",
+        formula: [
+          String.raw`\operatorname{SwiGLU}(x)=\left(xW_{\mathrm{gate}}\odot\operatorname{SiLU}(xW_{\mathrm{up}})\right)W_{\mathrm{down}}`,
+          String.raw`\operatorname{SiLU}(z)=z\,\sigma(z)`
+        ],
         sections: [
           ["优势", ["门控允许输入相关的信息选择。", "SiLU 平滑、非单调，梯度性质优于 ReLU 硬截断。", "在等参数/等计算比较下通常提升语言建模性能。"]],
           ["MoE 关联", "MoE 通常把 FFN/SwiGLU 块替换为专家，因此专家容量、激活参数与通信主要集中在这些投影。"],
@@ -1562,7 +1625,7 @@
         id: "pre-10", module: "prereq", topic: "Perplexity", level: "必会", origin: "已有＋补充",
         question: "Perplexity 的定义、直觉与局限是什么？SFT 后 PPL 上升是否一定变差？",
         answer: "PPL 是平均 token NLL 的指数，表示模型在该 tokenization 与数据分布上的不确定性；SFT 改变输出分布，通用预训练 PPL 可能上升而指令遵循变好，因此必须结合目标任务与保留能力评测。",
-        formula: "PPL = exp[-(1/N) Σ_t log p(x_t|x_<t)]",
+        formula: String.raw`\operatorname{PPL}=\exp\!\left[-\frac{1}{N}\sum_t\log p(x_t\mid x_{<t})\right]`,
         sections: [
           ["直觉", "PPL=10 可粗略理解为每步面对约 10 个等概率选项，但真实分布并非均匀，所以只是直觉。"],
           ["SFT 评测", "可计算只在 assistant token 上的 response PPL，并按领域/长度分桶；若不同模型 tokenizer 不同，优先比较 bits-per-byte/character 或下游指标。"],
@@ -1589,7 +1652,7 @@
         id: "pre-12", module: "prereq", topic: "MoE", level: "必会", origin: "已有",
         question: "MoE 为什么能解耦总参数与激活参数？代价是什么？",
         answer: "MoE 用 router 为每个 token 只选择少数 FFN experts，因此模型可拥有很大总容量却只计算 top‑K 专家；代价是全部专家权重的存储、all‑to‑all 通信、路由均衡、容量溢出和训练/推理一致性。",
-        formula: "MoE(x)=Σ_{i∈TopK(x)} g_i(x)·Expert_i(x)",
+        formula: String.raw`\operatorname{MoE}(x)=\sum_{i\in\operatorname{TopK}(x)}g_i(x)\,\operatorname{Expert}_i(x)`,
         sections: [
           ["两个参数口径", ["总参数：决定权重存储与潜在知识容量。", "激活参数：单 token 实际经过的参数，近似计算成本。"]],
           ["系统代价", "token 按路由跨设备发送，再把专家输出发回；通信常成为瓶颈，需要 expert parallel、节点受限路由与通信—计算重叠。"],
@@ -1629,7 +1692,7 @@
         id: "pre-15", module: "prereq", topic: "AdamW", level: "必会", origin: "已有",
         question: "AdamW 为什么要把 weight decay 与梯度更新解耦？",
         answer: "在 Adam 中把 L2 正则写进梯度后，会被逐参数二阶矩缩放，使不同方向的衰减强度失真；AdamW 直接按学习率收缩参数，再叠加自适应梯度步，得到更可控的正则。",
-        formula: "θ ← (1-ηλ)θ - η · m̂/(√v̂+ε)",
+        formula: String.raw`\theta\leftarrow(1-\eta\lambda)\theta-\eta\frac{\hat m}{\sqrt{\hat v}+\epsilon}`,
         sections: [
           ["矩估计", "m 跟踪梯度均值，v 跟踪平方梯度；bias correction 修正训练早期从零初始化的偏差。"],
           ["LLM 常见值", "β₁ 常为 0.9，β₂ 常见 0.95 或其他经过规模校准的值；不能把某一组参数当通用定律。"],
@@ -1733,7 +1796,11 @@
         id: "ds-05", module: "deepseek", topic: "V2 MLA", level: "必会", origin: "已有＋校正",
         question: "DeepSeek‑V2 的 MLA 解决什么问题？KV 压缩和 Query 压缩的目的为何不同？",
         answer: "MLA 通过把 K/V 联合下投影到低维 latent 并只缓存该 latent，大幅降低推理 KV cache；Query 压缩不参与长期缓存，主要减少训练时 Q 路径的激活内存。",
-        formula: "c_t^KV=W_DKV h_t\nk_t^C=W_UK c_t^KV, v_t^C=W_UV c_t^KV\n缓存：c_t^KV ＋ 小维度 RoPE key",
+        formula: [
+          String.raw`c_t^{\mathrm{KV}}=W^{\mathrm{DKV}}h_t`,
+          String.raw`k_t^C=W^{\mathrm{UK}}c_t^{\mathrm{KV}},\qquad v_t^C=W^{\mathrm{UV}}c_t^{\mathrm{KV}}`,
+          String.raw`\mathrm{Cache}=c_t^{\mathrm{KV}}+\text{低维 RoPE key}`
+        ],
         sections: [
           ["矩阵吸收", "推理中可把上投影与 Q/O 等矩阵组合，避免真的为每个历史 token 展开完整 K/V；所以低维 cache 不会被上投影的临时结果抵消。"],
           ["解耦 RoPE", "位置相关旋转矩阵会夹在可结合的线性矩阵之间，破坏吸收；V2 把位置分量拆出，用小维 q^R/k^R 单独承载 RoPE。"],
@@ -1761,7 +1828,10 @@
         id: "ds-07", module: "deepseek", topic: "GRPO", level: "必会", origin: "已有",
         question: "GRPO 如何在没有 critic 的情况下估计优势？它省了什么、牺牲了什么？",
         answer: "对同一 prompt 采样一组回答，用组内 reward 的均值/标准差构造相对优势，再配合 PPO 式 ratio clipping 与 KL；它省去与策略同规模的 value model，但依赖每题多采样且组内相对信号受 reward 分布影响。",
-        formula: "A_i=(r_i-mean(r_1…r_G))/(std(r_1…r_G)+ε)\nρ_{i,t}=π_θ(o_{i,t}|·)/π_old(o_{i,t}|·)",
+        formula: [
+          String.raw`A_i=\frac{r_i-\operatorname{mean}(r_1,\ldots,r_G)}{\operatorname{std}(r_1,\ldots,r_G)+\epsilon}`,
+          String.raw`\rho_{i,t}=\frac{\pi_\theta(o_{i,t}\mid\cdot)}{\pi_{\mathrm{old}}(o_{i,t}\mid\cdot)}`
+        ],
         sections: [
           ["为什么适合推理", "数学/代码同题可便宜采多个候选并客观验证；组内比较不要求学习一个跨题绝对 value function。"],
           ["资源", "省掉 critic 的权重、梯度、优化器与前向，给 671B MoE 策略和 rollout 留出显存/算力。"],
@@ -1893,7 +1963,10 @@
         id: "ds-17", module: "deepseek", topic: "V3.2 DSA", level: "必会", origin: "已有＋补充",
         question: "DeepSeek Sparse Attention（DSA）如何把昂贵主注意力从 O(L²) 降到 O(Lk)？",
         answer: "先用低维、少头、FP8、ReLU 的廉价索引器对所有位置打分并选 top‑k，再让完整 MLA 只对选中 token 做精确 attention；索引器仍是便宜的 O(L²)，主注意力才从大常数 L² 降到 Lk。",
-        formula: "原始：aL²\nDSA：bL² + aLk，其中 b≪a、k≪L",
+        formula: [
+          String.raw`\text{Dense attention:}\qquad aL^2`,
+          String.raw`\text{DSA:}\qquad bL^2+aLk,\quad b\ll a,\;k\ll L`
+        ],
         sections: [
           ["为何另建索引器", "若先用真实多头 QKᵀ 再选 top‑k，最贵打分已经做完，只省 AV；廉价索引器的意义是让完整 QK 和 AV 都只触碰 top‑k。"],
           ["训练", "先用 dense MLA attention 分布蒸馏索引器，学‘重要位置排序’；随后稀疏训练。索引器输入 detach，使主模型 LM loss 与索引 KL 各自优化。"],
@@ -2066,7 +2139,10 @@
         id: "v4-08", module: "v4", topic: "OPD 定义", level: "必会", origin: "论文精读＋已有",
         question: "V4 的 multi-teacher On‑Policy Distillation 目标函数是什么？",
         answer: "在 student 自己采样的轨迹状态上，最小化学生分布到多个相关 expert 分布的加权 reverse KL；任务上下文决定哪些教师有效，教师权重反映其相对重要性。",
-        formula: "L_OPD(θ)=Σ_{i=1}^N w_i · D_KL(π_θ || π_Ei)\n轨迹 y ~ π_θ；教师在学生前缀 (x,y_<t) 上给出 logits。",
+        formula: [
+          String.raw`\mathcal{L}_{\mathrm{OPD}}(\theta)=\sum_{i=1}^{N}w_i\,D_{\mathrm{KL}}\!\left(\pi_\theta\middle\|\pi_{E_i}\right)` ,
+          String.raw`y\sim\pi_\theta;\qquad \pi_{E_i}(\cdot\mid x,y_{<t})\text{ 在学生前缀上提供 logits}`
+        ],
         sections: [
           ["训练循环", ["学生对当前 prompt rollout。", "路由到相关领域教师。", "教师对学生每个前缀计算全词表分布。", "对各教师 reverse-KL 加权并更新学生。"]],
           ["多教师", "论文使用超过十个覆盖不同领域的 teacher；不是把权重直接 merge，而是在输出分布层面对齐到统一参数空间。"],
@@ -2093,7 +2169,10 @@
         id: "v4-10", module: "v4", topic: "Reverse KL", level: "必会", origin: "已有＋补充",
         question: "为什么 V4 OPD 使用 D_KL(student || teacher)？reverse KL 的梯度直觉是什么？",
         answer: "reverse KL 的期望在 student 分布上计算，天然匹配学生 rollout；它强烈惩罚学生把概率放在教师认为极低的区域，并倾向选择教师高概率 mode，适合把专家策略压进一个统一学生。",
-        formula: "D_KL(p||q)=Σ_a p(a)[log p(a)-log q(a)]\n这里 p=student，q=teacher。",
+        formula: [
+          String.raw`D_{\mathrm{KL}}(p\|q)=\sum_a p(a)\left[\log p(a)-\log q(a)\right]`,
+          String.raw`p=\pi_{\mathrm{student}},\qquad q=\pi_{\mathrm{teacher}}`
+        ],
         sections: [
           ["mode-seeking", "当 teacher 有多个相距很远的 mode、student 容量有限时，reverse KL 倾向集中在可覆盖的高概率 mode，而非为覆盖所有 mode 把概率摊到二者之间。"],
           ["on-policy 匹配", "期望由 p=student 加权，可直接在学生采样状态/动作附近估计；教师为这些状态提供密集分布。"],
@@ -2326,6 +2405,24 @@
       return `<${tag}>${items.map(item => `<li>${item}</li>`).join("")}</${tag}>`;
     }
 
+    function renderFormula(formula) {
+      const lines = Array.isArray(formula) ? formula : [formula];
+      return `<div class="formula">${lines.map(line => {
+        if (!window.katex) return `<div class="formula-line formula-fallback">${escapeText(line)}</div>`;
+        try {
+          return `<div class="formula-line">${window.katex.renderToString(line, {
+            displayMode: true,
+            throwOnError: true,
+            strict: "ignore",
+            trust: false,
+            output: "htmlAndMathml"
+          })}</div>`;
+        } catch (_) {
+          return `<div class="formula-line formula-fallback">${escapeText(line)}</div>`;
+        }
+      }).join("")}</div>`;
+    }
+
     function renderModules() {
       els.moduleNav.innerHTML = Object.entries(MODULES).map(([key, meta]) => {
         const scoped = key === "all" ? questions : questions.filter(q => q.module === key);
@@ -2366,7 +2463,7 @@
       const scopedIndex = items.findIndex(item => item.id === currentId) + 1;
       const status = statusOf(q.id);
       const sections = (q.sections || []).map(([title, content]) => `<div class="answer-section"><h3>${title}</h3>${Array.isArray(content) ? list(content) : `<p>${content}</p>`}</div>`).join("");
-      const formula = q.formula ? `<div class="formula">${q.formula}</div>` : "";
+      const formula = q.formula ? renderFormula(q.formula) : "";
       const traps = q.traps?.length ? `<div class="answer-section"><h3>易错点与边界</h3>${list(q.traps.map(x => `<span class="trap">${x}</span>`))}</div>` : "";
       const followups = q.followups?.length ? `<div class="answer-section"><h3>自检追问</h3>${list(q.followups, true)}</div>` : "";
       const sources = q.sources?.length ? `<div class="answer-section"><h3>对应本地材料</h3><div class="source-links">${q.sources.map(([label, href]) => `<a href="${href}">${label}</a>`).join("")}</div></div>` : "";
